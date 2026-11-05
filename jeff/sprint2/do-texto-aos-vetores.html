@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Do texto aos vetores</title>
+<style>
+/* Tokens da Dedux, os mesmos do docker-operar. Página "Do texto aos vetores": PLN clássico em doze estações, com um corpus de três textos sobre café. */
+:root{
+  --paper:#ffffff;--ink:#1f2023;--muted:#6b6f76;--faint:#b4b7bd;--line:#d9dadf;--soft:#f3f3f5;--surface-2:#e9e9ed;
+  --brand:#f97316;--brand-soft:#fed7aa;--brand-faint:#fff7ed;--brand-mid:#fdba74;--act:#c2410c;--on-act:#ffffff;
+  --ok:#1a9e55;--ok-soft:#d6f2e1;--bad:#e02020;--bad-soft:#fde2e2;
+  --t0:#fde7d3;--t1:#e1ebfb;--t2:#dff3e6;--t3:#efe4fb;--t4:#fbf0c2;
+  --w1:#fff7ed;--w2:#ffedd5;--w3:#fed7aa;--w4:#fdba74;
+  --font-text:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#15171b;--ink:#e8e7e4;--muted:#9a9ea5;--faint:#5d6168;--line:#33373e;--soft:#1e2126;--surface-2:#282c33;
+  --brand:#ff9b54;--brand-soft:#5c3413;--brand-faint:#2a1d12;--brand-mid:#8a4a1c;--act:#ff9b54;--on-act:#15171b;
+  --ok:#2ecc71;--ok-soft:#173a27;--bad:#ff5c5c;--bad-soft:#4a1f1f;
+  --t0:#4a3220;--t1:#22324a;--t2:#1f3d2b;--t3:#3a2a4d;--t4:#45401c;
+  --w1:#2a1d12;--w2:#3d2715;--w3:#5c3413;--w4:#8a4a1c;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#15171b;--ink:#e8e7e4;--muted:#9a9ea5;--faint:#5d6168;--line:#33373e;--soft:#1e2126;--surface-2:#282c33;
+  --brand:#ff9b54;--brand-soft:#5c3413;--brand-faint:#2a1d12;--brand-mid:#8a4a1c;--act:#ff9b54;--on-act:#15171b;
+  --ok:#2ecc71;--ok-soft:#173a27;--bad:#ff5c5c;--bad-soft:#4a1f1f;
+  --t0:#4a3220;--t1:#22324a;--t2:#1f3d2b;--t3:#3a2a4d;--t4:#45401c;
+  --w1:#2a1d12;--w2:#3d2715;--w3:#5c3413;--w4:#8a4a1c;color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 var(--font-text)}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:16px 40px}
+.ic{display:inline-flex;width:1.25em;height:1.25em;flex:none}
+.ic svg{width:100%;height:100%}
+:focus-visible{outline:2px solid var(--act);outline-offset:2px}
+.mono{font-family:var(--font-mono)}
+
+/* topo: título, trilho e lixeira em três colunas equilibradas */
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px 24px;margin-bottom:26px}
+h1{font-size:18px;font-weight:800;letter-spacing:-.01em;margin:0}
+.rail{display:flex;gap:4px;align-items:center}
+.rail .sep{width:1.5px;height:22px;background:var(--line);margin:0 6px}
+.rb{width:30px;height:30px;border-radius:50%;border:1.6px solid var(--line);background:var(--paper);color:var(--muted);display:grid;place-items:center;cursor:pointer;padding:0;font:inherit;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.rb.done{background:var(--brand);border-color:var(--brand);color:var(--on-act)}
+.rb.cur{border-color:var(--ink);color:var(--ink);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
+.rb.done.cur{color:var(--on-act)}
+.tools{display:flex;justify-content:flex-end}
+.wipe.confirm{background:var(--bad-soft);border-color:var(--bad);color:var(--ink)}
+
+/* estação: uma coluna central */
+main.st{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.st-head{display:flex;align-items:center;gap:12px}
+.st-ic{width:44px;height:44px;border-radius:12px;background:var(--brand-soft);color:var(--act);display:grid;place-items:center;font-size:22px;flex:none}
+h2{font-size:clamp(22px,3vw,30px);line-height:1.15;margin:0;font-weight:800;letter-spacing:-.015em;text-wrap:balance}
+.resumo{margin:0;font-size:16px;line-height:1.55;text-wrap:pretty}
+.resumo code,.box code{font:600 .9em var(--font-mono);background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:0 5px;white-space:nowrap}
+.ctl{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;min-height:66px}
+.stage{display:flex;flex-direction:column;gap:20px;min-height:340px}
+.lbl{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lbl.act{color:var(--act)}
+.take{display:flex;align-items:center;justify-content:center;gap:8px;font-size:18px;font-weight:800;margin:0;min-height:30px;text-align:center;text-wrap:balance}
+.take.vazio{visibility:hidden}
+.take .ic{color:var(--ok)}
+
+.btn{font:inherit;font-weight:700;font-size:14px;border-radius:9px;padding:9px 15px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.pulsing:not(:disabled){animation:pulsing 1.1s ease-in-out infinite}
+@keyframes pulsing{50%{box-shadow:0 0 0 6px var(--brand-soft)}}
+.passos{display:flex;align-items:center;gap:12px}
+.dots{display:flex;gap:7px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line);cursor:help}
+.dot.on{background:var(--brand)}
+.dot.cur{background:var(--ink)}
+
+/* a chamada de biblioteca decomposta: cada parte com o seu papel embaixo */
+.cmdl{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 12px}
+.part{display:inline-flex;flex-direction:column;gap:4px}
+.part code{font:700 clamp(15px,1.9vw,19px)/1.45 var(--font-mono);color:var(--ink);background:var(--soft);border-radius:7px;padding:0 9px;white-space:nowrap;align-self:flex-start}
+.part small{font:600 12.5px/1.3 var(--font-text);color:var(--muted);padding-left:9px;max-width:26ch;text-wrap:balance}
+.part.novo code{outline:2px solid var(--brand);outline-offset:1px;color:var(--act);animation:popin .5s ease both}
+
+/* caixas e colunas iguais */
+.box{border:1.5px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.box.cur{border:2px solid var(--ink)}
+.bh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.bh .n{font-size:14px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:stretch}
+.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:stretch}
+.vazio-txt{color:var(--faint);font-size:15px}
+.centro{display:flex;justify-content:center}
+.frase{font:500 clamp(18px,2.2vw,23px)/1.4 var(--font-mono);border:2px solid var(--ink);border-radius:12px;padding:10px 20px;text-align:center}
+.nota{margin:0;font-size:14px;color:var(--muted);text-align:center}
+.alerta{margin:0;font-size:15px;color:var(--bad);font-weight:700;text-align:center}
+
+/* tokens */
+.toks{display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;min-height:40px}
+.tk{display:inline-flex;flex-direction:column;align-items:center;border-radius:8px;padding:4px 10px;font:500 18px/1.35 var(--font-mono);color:var(--ink);background:var(--t0);border:1.5px solid transparent}
+.tk .id{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.c0{background:var(--t0)}.c1{background:var(--t1)}.c2{background:var(--t2)}.c3{background:var(--t3)}.c4{background:var(--t4)}
+.tk.ruim{background:var(--bad-soft);border-color:var(--bad)}
+.tk.muda{border-color:var(--brand);background:var(--brand-soft);font-weight:700}
+.tk.sai{background:transparent;border:1.5px dashed var(--faint);color:var(--muted);text-decoration:line-through}
+.tk.sai.grave{border-color:var(--bad);color:var(--bad)}
+.tk.fora{background:var(--bad-soft);border:1.5px dashed var(--bad)}
+.tk.fora .id{color:var(--bad);font-weight:800}
+.sobra{border-top:1px solid var(--line);padding-top:14px;font:600 20px var(--font-mono);text-align:center;min-height:44px}
+
+/* corpus */
+.doc{display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;justify-content:center}
+.doc .reg{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.doc .txt{font:500 20px/1.45 var(--font-mono)}
+.doc .txt.oculto{color:var(--faint)}
+
+/* vocabulário */
+.drawer{display:flex;flex-wrap:wrap;gap:6px}
+.entry{display:inline-flex;gap:8px;align-items:baseline;border-radius:7px;padding:3px 9px;background:var(--soft);font:500 15px var(--font-mono)}
+.entry b{color:var(--act);font-weight:700;font-size:12px}
+
+/* BPE */
+.palavras{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px}
+.pw{display:flex;align-items:center;gap:8px;min-width:0}
+.pw b{font:700 12.5px var(--font-mono);color:var(--muted);width:24px;text-align:right;flex:none}
+.pw .ps{display:flex;gap:3px;flex-wrap:wrap}
+.pc{display:inline-block;border:1.5px solid var(--line);border-radius:6px;padding:0 4px;font:500 14.5px/1.55 var(--font-mono);background:var(--paper);color:var(--ink)}
+.pw .ps{flex-wrap:nowrap}
+.pc.fus{background:var(--soft);border-color:var(--muted);font-weight:700}
+.pc.par{background:var(--brand-soft);border-color:var(--brand);color:var(--act);font-weight:700}
+.big{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.big .pc{font-size:30px;padding:0 12px}
+.big .seta{font-size:28px;color:var(--muted)}
+.fusoes{display:flex;flex-direction:column;gap:6px;font:500 16px var(--font-mono)}
+.fusoes span{display:flex;justify-content:space-between}
+.fusoes i{font-style:normal;color:var(--muted)}
+
+/* tabela de stemming e lematização */
+.tab{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
+.tab > span{padding:10px 16px;border-top:1px solid var(--line);font:500 19px var(--font-mono);text-align:center;min-height:50px}
+.tab .h{border-top:0;background:var(--soft);font:800 12px var(--font-text);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);min-height:0}
+.tab .h small{display:block;text-transform:none;letter-spacing:0;font-weight:600}
+.tab .p{font-weight:700}
+.tab .r{color:var(--act);font-weight:700}
+.tab .r.nao{color:var(--bad)}
+.tab .x{color:var(--faint)}
+
+/* matriz documento × termo */
+.mxw{overflow-x:auto}
+.mx{display:grid;border:1.5px solid var(--line);border-radius:14px;overflow:hidden;min-width:640px}
+.mx > span{font:500 16px var(--font-mono);height:52px;display:grid;place-items:center;border-top:1px solid var(--line);border-left:1px solid var(--line);color:var(--faint);font-variant-numeric:tabular-nums}
+.mx .h{font:700 13.5px var(--font-mono);color:var(--ink);height:46px;border-top:0;background:var(--soft);text-align:center;line-height:1.15;padding:0 2px}
+.mx .h0{background:var(--soft);border-top:0;border-left:0;height:46px}
+.mx .d{justify-content:start;padding-left:14px;border-left:0;font:700 13px var(--font-text);color:var(--ink);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.mx .v{color:var(--ink);font-weight:600}
+.mx .w1{background:var(--w1)}.mx .w2{background:var(--w2)}.mx .w3{background:var(--w3)}.mx .w4{background:var(--w4)}
+.mx .dif{background:var(--brand-soft);color:var(--act);font-weight:800}
+.mx .prod{background:var(--brand-soft);color:var(--act);font-weight:800}
+.mx .rodape{background:var(--soft);color:var(--ink);font-weight:700;font-size:14.5px}
+.mx .rodape.min{color:var(--act)}
+.mx .dl{background:var(--soft);justify-content:start;padding-left:14px;border-left:0;font:800 12px var(--font-text);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center}
+.res{display:flex;align-items:baseline;justify-content:center;gap:14px;font:700 22px var(--font-mono)}
+.res .rot{font:800 12px var(--font-text);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.res .val{font-size:34px;color:var(--act)}
+
+/* busca */
+.rk{display:grid;grid-template-columns:150px minmax(0,1fr) 260px 64px;align-items:center;gap:16px;padding:12px 14px;border-radius:12px}
+.rk .quem{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.rk .txt{font:500 17px var(--font-mono);min-width:0}
+.rk .track{height:16px;background:var(--soft);border-radius:8px;overflow:hidden;display:flex}
+.rk .fill{background:var(--brand);border-radius:8px;height:16px;transform-origin:left;animation:cresce .8s ease both}
+.rk .val{font:700 19px var(--font-mono);text-align:right;font-variant-numeric:tabular-nums}
+.rk.top{background:var(--brand-faint);outline:2px solid var(--brand)}
+.hit{background:var(--brand-soft);border-radius:4px;padding:0 3px;font-weight:700}
+@keyframes cresce{from{transform:scaleX(0)}to{transform:none}}
+
+/* navegação e vocabulário */
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--line)}
+.nav .count{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.nav-next .nq{font-weight:400;max-width:34ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){.nav-next .nq{display:none}}
+.btn.nav-next.ready{background:var(--act);border-color:var(--act);color:var(--on-act)}
+.tray{display:flex;flex-direction:column;gap:10px}
+.tray .n{font-variant-numeric:tabular-nums;font-weight:600;text-transform:none;letter-spacing:0}
+.vchips{display:flex;flex-wrap:wrap;gap:6px;min-height:27px}
+.vchip{font-size:13px;font-weight:700;border-radius:999px;padding:3px 11px;border:1.5px solid var(--brand);background:var(--brand-soft);color:var(--ink);cursor:help;display:inline-flex;align-items:center;gap:6px}
+.vchip.cmd{font-family:var(--font-mono);font-size:12.5px;border-radius:7px;background:var(--soft);border-color:var(--line)}
+.vchip.new{animation:popin .5s ease both}
+.vchip.float{position:fixed;z-index:45;pointer-events:none;box-shadow:0 4px 14px rgb(0 0 0 / .18);transition:transform .7s cubic-bezier(.4,.1,.3,1),opacity .7s;animation:popin .4s ease both}
+#tip{position:fixed;z-index:60;max-width:270px;background:var(--ink);color:var(--paper);font-size:13px;line-height:1.4;padding:7px 10px;border-radius:8px;pointer-events:none}
+.pop{animation:popin .45s ease both}
+@keyframes popin{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}
+@media (max-width:860px){
+  .top{grid-template-columns:minmax(0,1fr) auto}.top .rail{grid-column:1 / -1;grid-row:2;flex-wrap:wrap}
+  .cols2,.cols3,.palavras{grid-template-columns:minmax(0,1fr)}
+  .rk{grid-template-columns:110px minmax(0,1fr) 56px}.rk .track{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <h1 id="titulo">Do texto aos tokens</h1>
+    <nav class="rail" id="rail" aria-label="Estações"></nav>
+    <div class="tools"><button type="button" class="btn ghost wipe" id="wipe" aria-label="Apagar tudo"></button></div>
+  </header>
+  <main class="st" id="station"></main>
+  <footer class="tray" id="tray" style="max-width:1040px;margin:22px auto 0"></footer>
+</div>
+<div id="tip" role="tooltip" hidden></div>
+
+<script>
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = (q, r = document) => r.querySelector(q);
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v === false || v == null) continue;
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k, '');
+    else e.setAttribute(k, v);
+  }
+  for (const c of kids.flat(Infinity)) { if (c == null || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return e;
+}
+const put = (el, ...k) => el.append(...k.flat(Infinity).filter(c => c != null && c !== false));
+const sleep = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
+/* o resumo da estação: `trecho` vira código */
+const rico = t => t.split(/`([^`]+)`/).map((x, i) => i % 2 ? h('code', {}, x) : x);
+/* números no formato brasileiro, com duas casas */
+const n2 = x => x.toFixed(2).replace('.', ',');
+
+/* ---------- ícones ---------- */
+const ICONS = {
+  play: '<path d="M8 5.5v13l10-6.5z" fill="currentColor"/>',
+  recomecar: '<path d="M4 12a8 8 0 1 0 2.34-5.66"/><path d="M4 4v4h4"/>',
+  esq: '<path d="M15 5 8 12l7 7"/>', dir: '<path d="m9 5 7 7-7 7"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  vocab: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>',
+  lixeira: '<path d="M5 7h14M9 7V4h6v3M8 7l1 13h6l1-13"/>',
+  livros: '<path d="M4 19V5h4v14zM10 19V5h4v14z"/><path d="m16 6 3.5-1 3 13.5-3.5 1z"/>',
+  balao: '<path d="M4 5h16v11H9l-5 4z"/>',
+  livro: '<path d="M12 6c-2-1.5-5-2-8-1.5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-13c-3-.5-6 0-8 1.5z"/><path d="M12 6v13"/>',
+  frasco: '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/>',
+  tesoura: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.6 7.6 20 18M8.6 16.4 20 6"/>',
+  numeros: '<path d="M9 4 7 20M17 4l-2 16M4 9h16M3 15h16"/>',
+  blocos: '<rect x="3" y="8" width="7" height="8" rx="1.5"/><rect x="14" y="8" width="7" height="8" rx="1.5"/><path d="M10 12h4"/>',
+  caixa: '<path d="M4 18 8.5 6h1L14 18M5.7 14h6.6"/><path d="M20 18v-6.5a2.5 2.5 0 0 0-5 0M15 15.5a2.5 2.5 0 1 0 5 0"/>',
+  filtro: '<path d="M4 5h16l-6 7v6l-4 2v-8z"/>',
+  raiz: '<path d="M12 3v9M12 12l-5 5M12 12l5 5M12 12v8M7 17l-2 3M17 17l2 3"/>',
+  grade: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>',
+  par: '<rect x="2.5" y="8" width="8" height="8" rx="2"/><rect x="13.5" y="8" width="8" height="8" rx="2"/><path d="M6.5 5h11"/>',
+  barras: '<path d="M5 20V10M10 20V4M15 20v-7M20 20v-4"/>',
+  angulo: '<path d="M4 20 20 6M4 20h16"/><path d="M12 20a8 8 0 0 0-2.3-5.6"/>',
+  lupa: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
+};
+function icon(n) { const sp = document.createElement('span'); sp.className = 'ic'; sp.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`; return sp; }
+const lbl = (text, cls) => h('div', { class: 'lbl' + (cls ? ' ' + cls : '') }, text);
+
+/* ---------- tooltip ---------- */
+const tip = $('#tip');
+let tipFor = null, lastPtr = 'mouse';
+function showTip(el) {
+  const t = el.getAttribute('data-tip'); if (!t) return;
+  tipFor = el; tip.textContent = t; tip.hidden = false;
+  const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+  const x = Math.max(8, Math.min(innerWidth - tw - 8, r.left + r.width / 2 - tw / 2));
+  let y = r.top - th - 8; if (y < 8) y = r.bottom + 8;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function hideTip() { tip.hidden = true; tipFor = null; }
+const tipOf = e => e.target && e.target.closest ? e.target.closest('[data-tip]') : null;
+addEventListener('pointerdown', e => { lastPtr = e.pointerType || 'mouse'; }, true);
+document.addEventListener('pointerover', e => { if (e.pointerType !== 'mouse') return; const t = tipOf(e); if (t && t !== tipFor) showTip(t); else if (!t && tipFor) hideTip(); });
+document.addEventListener('focusin', e => { const t = tipOf(e); if (t && e.target.matches(':focus-visible')) showTip(t); });
+document.addEventListener('focusout', () => { if (lastPtr === 'mouse') hideTip(); });
+document.addEventListener('click', e => { if (lastPtr === 'mouse') return; const t = tipOf(e); if (t && !t.closest('button')) { if (tipFor === t) hideTip(); else showTip(t); } else hideTip(); });
+addEventListener('scroll', hideTip, { passive: true });
+
+/* ---------- estado guardado ---------- */
+const KEY = 'ec08-pln:do-texto-aos-vetores';
+let earned = [], done = new Set();
+try { const g = JSON.parse(localStorage.getItem(KEY) || 'null'); if (g) { earned = g.earned || []; done = new Set(g.done || []); } } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ earned, done: [...done] })); } catch (e) {} }
+
+/* ---------- o corpus e as saídas das bibliotecas ----------
+   Tudo o que vem de biblioteca foi conferido em ferramentas/saidas_reais.py
+   (NLTK 3.10, spaCy 3.8 com pt_core_news_lg, scikit-learn 1.9, tokenizers):
+   a saída está em ferramentas/saidas_reais.txt. */
+const DOCS = [
+  { id: 'tweet', rot: 'tweet', ic: 'balao', txt: 'não tomei o cafezinho!!! 😴 #café' },
+  { id: 'livro', rot: 'livro', ic: 'livro', txt: 'O café fumegava na caneca.' },
+  { id: 'artigo', rot: 'artigo científico', ic: 'frasco', txt: 'A cafeína do café reduz o sono.' },
+];
+const SPLIT0 = ['não', 'tomei', 'o', 'cafezinho!!!', '😴', '#café'];
+const NLTK = [
+  ['não', 'tomei', 'o', 'cafezinho', '!', '!', '!', '😴', '#', 'café'],
+  ['O', 'café', 'fumegava', 'na', 'caneca', '.'],
+  ['A', 'cafeína', 'do', 'café', 'reduz', 'o', 'sono', '.'],
+];
+/* tokens normalizados: minúsculas, só letras e números */
+const NORM = NLTK.map(ts => ts.filter(t => /^[\p{L}\p{N}]+$/u.test(t)).map(t => t.toLowerCase()));
+/* os tokens normalizados que estão na lista de stop words do NLTK (207 palavras) */
+const STOP = new Set(['não', 'o', 'a', 'do', 'na']);
+const REDUZ = [
+  ['cafezinho', 'caf', 'cafezinho'], ['cafés', 'café', 'café'], ['café', 'café', 'café'],
+  ['tomei', 'tom', 'tomar'], ['fumegava', 'fumeg', 'fumegar'], ['reduz', 'reduz', 'reduzir'],
+];
+/* scikit-learn: vocabulário, contagens, IDF e TF-IDF do corpus */
+const COLS = ['cafezinho', 'cafeína', 'café', 'caneca', 'do', 'fumegava', 'na', 'não', 'reduz', 'sono', 'tomei'];
+const BOW = [[1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1], [0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0], [0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0]];
+const IDF = COLS.map(c => c === 'café' ? 1 : 1.6931);
+const TFIDF = [
+  [.5465, 0, .3227, 0, 0, 0, 0, .5465, 0, 0, .5465],
+  [0, 0, .3227, .5465, 0, .5465, .5465, 0, 0, 0, 0],
+  [0, .4795, .2832, 0, .4795, 0, 0, 0, .4795, .4795, 0],
+];
+const CONSULTA = 'tomei café';
+const QV = [0, 0, .5085, 0, 0, 0, 0, 0, 0, 0, .861];
+const QCOS = [.6346, .1641, .144];
+/* n-gramas: um par de frases à parte, com as mesmas palavras em outra ordem */
+const ORDEM = ['tomei café, não chá', 'tomei chá, não café'];
+const UNI = { cols: ['café', 'chá', 'não', 'tomei'], m: [[1, 1, 1, 1], [1, 1, 1, 1]] };
+const BI = { cols: ['café', 'café não', 'chá', 'chá não', 'não', 'não café', 'não chá', 'tomei', 'tomei café', 'tomei chá'], m: [[1, 1, 1, 0, 1, 0, 1, 1, 1, 0], [1, 0, 1, 1, 1, 1, 0, 1, 0, 1]] };
+
+/* ---------- BPE: as palavras do corpus, letra por letra ---------- */
+const PALAVRAS = (() => { const c = new Map(); for (const d of DOCS) for (const w of d.txt.match(/[\p{L}\p{N}]+/gu)) c.set(w, (c.get(w) || 0) + 1); return [...c].sort((a, b) => b[1] - a[1]); })();
+const LETRAS = new Set(PALAVRAS.flatMap(([w]) => [...w])).size;
+function juntar(seg, par) { const o = []; for (let i = 0; i < seg.length; i++) { if (i < seg.length - 1 && seg[i] === par[0] && seg[i + 1] === par[1]) { o.push(par[0] + par[1]); i++; } else o.push(seg[i]); } return o; }
+function contarPares(segs) {
+  const c = new Map();
+  PALAVRAS.forEach(([w, f], i) => { const s = segs[i]; for (let j = 0; j < s.length - 1; j++) { const k = s[j] + '\u0000' + s[j + 1]; const e = c.get(k) || { par: [s[j], s[j + 1]], n: 0, onde: new Map() }; e.n += f; e.onde.set(w, (e.onde.get(w) || 0) + f); c.set(k, e); } });
+  return [...c.values()].sort((a, b) => b.n - a.n);
+}
+/* as três primeiras fusões têm vencedor único; depois disso começam os empates */
+const BPE = (() => {
+  let segs = PALAVRAS.map(([w]) => [...w]); const etapas = [];
+  for (let k = 0; k < 3; k++) { const pares = contarPares(segs); etapas.push({ segs, prox: pares[0], seg2: pares[1] }); segs = segs.map(s => juntar(s, pares[0].par)); }
+  etapas.push({ segs, prox: null });
+  return etapas;
+})();
+const FUSOES = BPE.slice(0, 3).map(e => e.prox);
+function cortarBPE(w) { let s = [...w]; for (const f of FUSOES) s = juntar(s, f.par); return s; }
+
+/* ---------- peças de tela ---------- */
+const tkCls = i => 'c' + (i % 5);
+const tok = (t, i, o = {}) => h('span', { class: 'tk ' + (o.cls || tkCls(i)) + (o.pop ? ' pop' : ''), style: o.pop ? `animation-delay:${(o.d || 0) + i * 70}ms` : null }, h('span', {}, t), o.id != null ? h('span', { class: 'id' }, String(o.id)) : null);
+const toks = (ts, o = {}) => h('div', { class: 'toks' }, ts.map((t, i) => tok(t, i, { ...o, cls: o.clsOf ? o.clsOf(t, i) : null })));
+const caixa = (titulo, corpo, o = {}) => h('section', { class: 'box' + (o.cur ? ' cur' : ''), 'aria-label': o.aria || titulo }, h('div', { class: 'bh' }, lbl(titulo, o.cur ? 'act' : ''), o.n != null ? h('span', { class: 'n' }, o.n) : null), corpo);
+const vazio = t => h('div', { class: 'vazio-txt' }, t || '—');
+const docLbl = d => h('span', { class: 'lbl' }, icon(d.ic), d.rot);
+const pal = (t, cls) => h('span', { class: 'pc' + (cls ? ' ' + cls : '') }, t);
+const fmtPeso = (x, sem0) => x ? n2(x) : (sem0 ? '' : '0');
+const tom = x => x >= .6 ? 'w4' : x >= .45 ? 'w3' : x >= .3 ? 'w2' : x > 0 ? 'w1' : '';
+
+/* uma matriz documento × termo: linhas [{rot, ic, vals, cls?}], colunas e um rodapé opcional */
+function matriz(cols, linhas, o = {}) {
+  const g = h('div', { class: 'mx', role: 'table', 'aria-label': o.aria || 'Matriz documento por termo', style: `grid-template-columns:${o.lw || 150}px repeat(${cols.length},minmax(0,1fr))` });
+  put(g, h('span', { class: 'h0' }), cols.map((c, j) => h('span', { class: 'h' + (o.colPop ? ' pop' : ''), style: o.colPop ? `animation-delay:${j * 50}ms` : null }, c)));
+  linhas.forEach((l, i) => {
+    put(g, h('span', { class: 'd' }, l.ic ? icon(l.ic) : null, l.rot));
+    l.vals.forEach((v, j) => {
+      const txt = v == null ? '' : l.fmt ? l.fmt(v, j) : String(v);
+      const cls = [v ? 'v' : '', l.cls ? l.cls(v, j) : '', l.pop ? 'pop' : ''].filter(Boolean).join(' ');
+      put(g, h('span', { class: cls, style: l.pop ? `animation-delay:${(l.d || 0) + j * 40}ms` : null }, txt));
+    });
+  });
+  if (o.rodape) { put(g, h('span', { class: 'dl' }, o.rodape.rot), o.rodape.vals.map((v, j) => h('span', { class: 'rodape' + (o.rodape.cls ? ' ' + o.rodape.cls(v, j) : '') + (o.rodape.pop ? ' pop' : ''), style: o.rodape.pop ? `animation-delay:${j * 40}ms` : null }, o.rodape.fmt(v, j)))); }
+  return h('div', { class: 'mxw' }, g);
+}
+const rotDoc = (d, extra) => ({ rot: d.rot === 'artigo científico' ? 'artigo' : d.rot, ic: d.ic, ...extra });
+
+/* ---------- as estações ----------
+   Cada estação tem passos; cada passo tem o rótulo do botão, a chamada de biblioteca (partes com o papel
+   de cada uma e a marca do que é novo) e os conceitos que ele acrescenta ao vocabulário. A tela de cada
+   estação é desenhada pelo número de passos dados, k; o que aparece no passo k entra animado. */
+const STATIONS = [
+  /* ================= página 1 · do texto aos tokens ================= */
+  { id: 'corpus', parte: 1, ic: 'livros', q: 'Corpus',
+    res: 'Três textos curtos sobre o mesmo assunto, escritos de jeitos diferentes: um tweet, um trecho de livro e uma frase de artigo científico. Juntos, eles são o corpus. É com eles que vamos trabalhar até o fim.',
+    take: 'Mesmo assunto, três jeitos de escrever. Esse é o corpus.',
+    passos: [
+      { label: 'Ler o tweet', earn: ['corpus'] },
+      { label: 'Ler o trecho do livro' },
+      { label: 'Ler o artigo científico', earn: ['documento'] },
+    ],
+    draw: (k, an) => h('div', { class: 'cols3' }, DOCS.map((d, i) => h('section', { class: 'box doc' + (k === i + 1 ? ' cur' : ''), 'aria-label': d.rot, style: 'min-height:190px' },
+      h('div', { class: 'reg' }, icon(d.ic), d.rot),
+      k > i ? h('div', { class: 'txt' + (an === i + 1 ? ' pop' : '') }, d.txt) : h('div', { class: 'txt oculto' }, '…')))) },
+
+  { id: 'palavras', parte: 1, ic: 'tesoura', q: 'Tokenização em palavras',
+    res: 'Tokenizar é cortar o texto em unidades, os tokens. Cortar nos espaços deixa a pontuação grudada na palavra. O `word_tokenize` do NLTK corta pelas regras do português e separa a pontuação e os símbolos.',
+    take: 'O tokenizador decide o que vira unidade.',
+    passos: [
+      { label: 'Cortar nos espaços', code: [['texto.split()', 'corta onde houver espaço', 1]], earn: ['token', 'c_split'] },
+      { label: 'Cortar pelas regras do português', code: [['word_tokenize(', 'a função do NLTK que corta em palavras', 1], ['texto,', 'o tweet'], ['language="portuguese")', 'as regras do português', 1]], earn: ['tokenizador', 'c_wt'] },
+    ],
+    draw: (k, an) => [
+      h('div', { class: 'centro' }, h('div', { class: 'frase' }, DOCS[0].txt)),
+      h('div', { class: 'cols2' },
+        caixa('Nos espaços', k >= 1 ? toks(SPLIT0, { pop: an === 1, clsOf: (t, i) => /[!#]/.test(t) ? 'ruim' : tkCls(i) }) : vazio(), { n: k >= 1 ? '6 tokens' : null, cur: k === 1 }),
+        caixa('Pelas regras do NLTK', k >= 2 ? toks(NLTK[0], { pop: an === 2 }) : vazio(), { n: k >= 2 ? '10 tokens' : null, cur: k === 2 })),
+    ] },
+
+  { id: 'vocabulario', parte: 1, ic: 'numeros', q: 'Vocabulário e identificador',
+    res: 'O vocabulário é a lista dos tokens diferentes do corpus. Cada token ganha um número, o identificador, e o texto vira uma sequência de números. Um token que não está no vocabulário não tem número.',
+    take: 'Cada token vira um número. O que não está no vocabulário fica sem número.',
+    passos: [
+      { label: 'Montar o vocabulário', code: [['vocab =', 'a lista do vocabulário'], ['list(dict.fromkeys(tokens))', 'cada token uma vez, na ordem em que aparece', 1]], earn: ['vocabulario', 'identificador'] },
+      { label: 'Trocar o tweet por números', code: [['[vocab.index(t)', 'a posição de cada token no vocabulário', 1], ['for t in tweet]', 'cada token do tweet']] },
+      { label: 'Procurar uma palavra nova', code: [['vocab.index("cafés")', 'cafés não aparece no corpus', 1]], earn: ['fora'] },
+    ],
+    draw: (k, an) => {
+      const voc = [...new Set(NLTK.flat())];
+      return [
+        caixa('Vocabulário', k >= 1 ? h('div', { class: 'drawer' }, voc.map((t, i) => h('span', { class: 'entry' + (an === 1 ? ' pop' : ''), style: an === 1 ? `animation-delay:${i * 50}ms` : null }, t, h('b', {}, String(i))))) : vazio(), { n: k >= 1 ? voc.length + ' tokens' : null, cur: k === 1 }),
+        caixa('O tweet em números', k >= 2 ? h('div', { class: 'toks' }, NLTK[0].map((t, i) => tok(t, i, { id: voc.indexOf(t), pop: an === 2 })),
+          k >= 3 ? [h('span', { style: 'width:24px' }), h('span', { class: 'tk fora' + (an === 3 ? ' pop' : '') }, h('span', {}, 'cafés'), h('span', { class: 'id' }, '?'))] : null) : vazio(), { cur: k >= 2 }),
+        k >= 3 ? h('p', { class: 'alerta' + (an === 3 ? ' pop' : '') }, '“cafés” está fora do vocabulário: o Python responde ValueError.') : null,
+      ];
+    } },
+
+  { id: 'bpe', parte: 1, ic: 'blocos', q: 'Subpalavras (BPE)',
+    res: 'O BPE monta um vocabulário de pedaços de palavras. Começa com as letras de cada palavra do corpus e, a cada passo, junta o par vizinho que mais aparece; o par vira um token novo. Uma palavra que nunca apareceu é cortada em pedaços que o vocabulário já tem.',
+    take: 'O que se repete vira token. A palavra nova sai em pedaços conhecidos.',
+    passos: [
+      { label: 'Juntar o par mais frequente', code: [['BpeTrainer(', 'aprende as junções a partir do corpus', 1], [`vocab_size=${LETRAS + 3})`, `${LETRAS} letras e 3 junções`, 1]], earn: ['subpalavra', 'bpe'] },
+      { label: 'Juntar o próximo par', code: [['BpeTrainer(', 'aprende as junções a partir do corpus'], [`vocab_size=${LETRAS + 3})`, `${LETRAS} letras e 3 junções`]] },
+      { label: 'Juntar o próximo par', code: [['BpeTrainer(', 'aprende as junções a partir do corpus'], [`vocab_size=${LETRAS + 3})`, `${LETRAS} letras e 3 junções`]], earn: ['c_bpe'] },
+      { label: 'Cortar a palavra nova', code: [['tokenizer.encode("cafés")', 'corta a palavra nova', 1], ['.tokens', 'os pedaços']] },
+    ],
+    draw: (k, an) => {
+      const e = BPE[Math.min(k, 3)], prox = k < 3 ? e.prox : null;
+      const marca = prox ? prox.par : null;
+      const palavras = h('div', { class: 'palavras' }, PALAVRAS.map(([w, f], i) => {
+        const s = e.segs[i], cls = s.map(() => '');
+        if (marca) for (let j = 0; j < s.length - 1; j++) if (s[j] === marca[0] && s[j + 1] === marca[1]) { cls[j] = cls[j + 1] = 'par'; j++; }
+        return h('div', { class: 'pw' }, h('b', {}, f + '×'), h('span', { class: 'ps' }, s.map((p, j) => pal(p, cls[j] || (p.length > 1 ? 'fus' : '') + (an && an <= 3 && p.length > 1 && FUSOES[an - 1] && p === FUSOES[an - 1].par.join('') ? ' pop' : '')))));
+      }));
+      let direita;
+      if (prox) {
+        const onde = [...prox.onde].map(([w, n]) => `${n} em “${w}”`).join(' + ');
+        direita = caixa('Par mais frequente', [
+          h('div', { class: 'big' + (an ? ' pop' : '') }, pal(prox.par[0], 'par'), pal(prox.par[1], 'par'), h('span', { class: 'seta' }, '→'), pal(prox.par.join(''), 'par')),
+          h('div', { class: 'nota', style: 'font-size:16px;color:var(--ink)' }, h('b', { class: 'mono' }, prox.n + ' vezes'), ' = ' + onde),
+          h('div', { class: 'nota' }, `o próximo da fila aparece ${e.seg2.n} vezes`),
+        ], { cur: true });
+      } else if (k === 3) {
+        direita = caixa('Junções aprendidas', h('div', { class: 'fusoes' }, FUSOES.map((f, i) => h('span', { class: an === 3 && i === 2 ? 'pop' : null }, h('span', {}, `${f.par[0]} + ${f.par[1]} → ${f.par.join('')}`), h('i', {}, f.n + '×')))), { cur: true, n: `${LETRAS} + 3 = ${LETRAS + 3} tokens` });
+      } else {
+        direita = caixa('Palavra nova', [
+          h('div', { class: 'big' }, h('span', { class: 'frase', style: 'font-size:26px' }, 'cafés'), h('span', { class: 'seta' }, '→'), cortarBPE('cafés').map(p => pal(p, (p.length > 1 ? 'fus' : '') + (an === 4 ? ' pop' : '')))),
+          h('div', { class: 'nota' }, '“café” é um token do vocabulário; o “s” é uma letra.'),
+        ], { cur: true });
+      }
+      return h('div', { class: 'cols2' }, caixa('Palavras do corpus', palavras, { n: k < 4 ? `vocabulário: ${LETRAS} + ${Math.min(k, 3)}` : null }), direita);
+    } },
+
+  { id: 'normalizacao', parte: 1, ic: 'caixa', q: 'Normalização',
+    res: 'Para o computador, “O” e “o” são tokens diferentes. Normalizar é reduzir variações que não importam para a tarefa: passar tudo para minúsculas e, aqui, tirar a pontuação e os símbolos. O vocabulário encolhe; alguns sinais se perdem junto.',
+    take: 'Normalizar junta o que deveria ser igual e também apaga sinais, como o 😴.',
+    passos: [
+      { label: 'Passar para minúsculas', code: [['[t.lower()', 'cada token em minúsculas', 1], ['for t in tokens]', 'cada token do texto']], earn: ['normalizacao', 'c_lower'] },
+      { label: 'Tirar a pontuação e os símbolos', code: [['[t.lower()', 'cada token em minúsculas'], ['for t in tokens', 'cada token do texto'], ['if t.isalnum()]', 'fica só o que é letra ou número', 1]] },
+    ],
+    draw: (k, an) => {
+      const nVoc = [18, 17, 13][k];
+      const linhas = NLTK.map((ts, di) => h('div', { style: 'display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;align-items:center' }, docLbl(DOCS[di]),
+        h('div', { class: 'toks' }, ts.map((t, i) => {
+          const muda = k >= 1 && t !== t.toLowerCase(), sai = k >= 2 && !/^[\p{L}\p{N}]+$/u.test(t);
+          return tok(k >= 1 ? t.toLowerCase() : t, i, { cls: sai ? 'sai' : muda ? 'muda' : tkCls(i), pop: (an === 1 && muda) || (an === 2 && sai) });
+        }))));
+      return [
+        caixa('Tokens do corpus', linhas, { cur: k > 0 }),
+        h('div', { class: 'res' }, h('span', { class: 'rot' }, 'vocabulário'), [18, 17, 13].slice(0, k).map(v => h('span', { style: 'color:var(--muted)' }, v + ' →')), h('span', { class: 'val' + (an ? ' pop' : '') }, String(nVoc)), h('span', { class: 'rot' }, 'tokens diferentes')),
+      ];
+    } },
+
+  { id: 'stopwords', parte: 1, ic: 'filtro', q: 'Stop words',
+    res: 'Stop words são palavras muito frequentes, como artigos e preposições, que pouco dizem sobre o assunto do texto. O NLTK tem uma lista de 207 delas para o português, e o filtro tira dos tokens tudo o que está na lista. O `não` está nela.',
+    take: 'Sem o “não”, o tweet diz o contrário. A lista não sabe o que importa na tarefa.',
+    passos: [
+      { label: 'Filtrar o tweet', code: [['[t for t in tokens', 'cada token normalizado'], ['if t not in stopwords.words("portuguese")]', 'fica só o que não está na lista do NLTK', 1]], earn: ['stopword', 'c_stop'] },
+      { label: 'Filtrar o artigo científico', code: [['[t for t in tokens', 'cada token normalizado'], ['if t not in stopwords.words("portuguese")]', 'fica só o que não está na lista do NLTK']] },
+    ],
+    draw: (k, an) => h('div', { class: 'cols2' }, [0, 2].map((di, c) => {
+      const ts = NORM[di], feito = k > c;
+      return caixa(DOCS[di].rot, [
+        h('div', { class: 'toks', style: 'min-height:96px' }, ts.map((t, i) => tok(t, i, { cls: feito && STOP.has(t) ? 'sai' + (t === 'não' ? ' grave' : '') : tkCls(i), pop: an === c + 1 && STOP.has(t) }))),
+        h('div', { class: 'sobra' + (an === c + 1 ? ' pop' : '') }, feito ? ts.filter(t => !STOP.has(t)).join(' ') : ''),
+      ], { cur: k === c + 1 });
+    })) },
+
+  { id: 'reducao', parte: 1, ic: 'raiz', q: 'Stemming e lematização',
+    res: 'As duas técnicas reduzem as formas de uma palavra a uma só, para que “café” e “cafés” contem como a mesma coisa. O stemming corta o fim da palavra por regras. A lematização analisa a frase e devolve a forma de dicionário: o verbo no infinitivo, o substantivo no singular.',
+    take: 'O stemmer corta o fim da palavra; o lematizador procura a forma de dicionário.',
+    passos: [
+      { label: 'Reduzir com o stemmer', code: [['RSLPStemmer()', 'o stemmer do NLTK para o português', 1], ['.stem(palavra)', 'corta o fim da palavra', 1]], earn: ['stemming', 'c_stem'] },
+      { label: 'Reduzir com o lematizador', code: [['nlp(texto)', 'o spaCy analisa a frase', 1], ['token.lemma_', 'a forma de dicionário de cada token', 1]], earn: ['lematizacao', 'c_lema'] },
+    ],
+    draw: (k, an) => {
+      return h('div',{ class: 'tab', role: 'table', 'aria-label': 'Palavras, stems e lemas' },
+        h('span', { class: 'h' }, 'palavra'), h('span', { class: 'h' }, 'stemming', h('small', {}, 'RSLP, do NLTK')), h('span', { class: 'h' }, 'lematização', h('small', {}, 'spaCy')),
+        REDUZ.map(([p, s, l], i) => [
+          h('span', { class: 'p' }, p),
+          k >= 1 ? h('span', { class: 'r' + (an === 1 ? ' pop' : ''), style: an === 1 ? `animation-delay:${i * 90}ms` : null }, s) : h('span', { class: 'x' }, '·'),
+          k >= 2 ? h('span', { class: 'r' + (an === 2 ? ' pop' : ''), style: an === 2 ? `animation-delay:${i * 90}ms` : null }, l) : h('span', { class: 'x' }, '·'),
+        ]));
+    } },
+
+  /* ================= página 2 · dos tokens aos vetores ================= */
+  { id: 'bow', parte: 2, ic: 'grade', q: 'Bag-of-words',
+    res: 'O bag-of-words transforma cada texto num vetor: uma coluna para cada palavra do vocabulário, e em cada célula quantas vezes a palavra aparece no texto. O `CountVectorizer` do scikit-learn faz a própria tokenização: passa para minúsculas e ignora a pontuação e as palavras de uma letra.',
+    take: 'Cada texto vira uma linha de contagens. A maior parte das células é zero.',
+    passos: [
+      { label: 'Montar o vocabulário', code: [['vet = CountVectorizer()', 'o contador de palavras', 1], ['vet.fit(corpus)', 'aprende o vocabulário', 1]], earn: ['bow'] },
+      { label: 'Contar as palavras de cada texto', code: [['X = vet.transform(corpus)', 'uma linha por texto, uma coluna por palavra', 1]], earn: ['matriz', 'esparsa', 'c_cv'] },
+    ],
+    draw: (k, an) => [
+      k >= 1 ? matriz(COLS, DOCS.map((d, i) => rotDoc(d, { vals: k >= 2 ? BOW[i] : COLS.map(() => null), pop: an === 2, d: i * 200 })), { colPop: an === 1 }) : h('div', { class: 'box', style: 'min-height:260px;justify-content:center;align-items:center' }, vazio('a matriz aparece aqui')),
+      h('p', { class: 'nota' + (an === 2 ? ' pop' : '') }, k >= 2 ? '20 das 33 células são zero.' : k >= 1 ? '11 palavras no vocabulário, uma coluna para cada.' : ''),
+    ] },
+
+  { id: 'ngramas', parte: 2, ic: 'par', q: 'N-gramas',
+    res: 'O bag-of-words conta palavras soltas e descarta a ordem. Duas frases com as mesmas palavras em outra ordem viram o mesmo vetor. Contar também pares de palavras vizinhas, os bigramas, guarda um pouco da ordem, e o vocabulário cresce.',
+    take: 'Palavras soltas perdem a ordem. Pares de palavras guardam um pouco dela, com mais colunas.',
+    passos: [
+      { label: 'Contar palavras soltas', code: [['CountVectorizer()', 'só palavras soltas']] },
+      { label: 'Contar também pares de palavras', code: [['CountVectorizer(', 'o contador de palavras'], ['ngram_range=(1, 2))', 'palavras soltas e pares de palavras vizinhas', 1]], earn: ['ngrama', 'c_ngram'] },
+    ],
+    draw: (k, an) => {
+      const M = k >= 2 ? BI : UNI, dif = j => M.m[0][j] !== M.m[1][j];
+      return [
+        h('div', { class: 'cols2' }, ORDEM.map((f, i) => h('div', { class: 'centro' }, h('div', { class: 'frase', style: 'width:100%' }, h('span', { class: 'lbl', style: 'justify-content:center;margin-bottom:4px' }, 'frase ' + (i + 1)), f)))),
+        k >= 1 ? matriz(M.cols, M.m.map((r, i) => ({ rot: 'frase ' + (i + 1), vals: r, cls: (v, j) => k >= 2 && dif(j) ? 'dif' : '', pop: an != null, d: i * 200 })), { colPop: an != null, lw: 110 }) : h('div', { class: 'box', style: 'min-height:170px;justify-content:center;align-items:center' }, vazio('a matriz aparece aqui')),
+        h('p', { class: k === 1 ? 'alerta' : 'nota' }, k === 1 ? 'As duas linhas são iguais: quem tomou café e quem tomou chá ficou igual.' : k >= 2 ? '4 colunas viraram 10. As colunas em laranja separam as frases.' : ''),
+      ];
+    } },
+
+  { id: 'tfidf', parte: 2, ic: 'barras', q: 'TF-IDF',
+    res: 'No TF-IDF, a contagem de cada palavra (TF) é multiplicada pelo IDF, que diminui quanto mais textos do corpus têm a palavra. Quem aparece em todos os textos pesa menos. Depois, cada linha é ajustada para ter comprimento 1, e textos de tamanhos diferentes ficam comparáveis.',
+    take: '“café” está nos três textos e pesa menos que qualquer outra palavra.',
+    passos: [
+      { label: 'Contar as palavras', code: [['CountVectorizer().fit_transform(corpus)', 'as contagens do bag-of-words']] },
+      { label: 'Calcular o IDF', code: [['vet = TfidfVectorizer().fit(corpus)', 'aprende o vocabulário e o IDF', 1], ['vet.idf_', 'o IDF de cada palavra', 1]], earn: ['idf'] },
+      { label: 'Ponderar pelo IDF', code: [['X = vet.transform(corpus)', 'contagem × IDF, cada linha com comprimento 1', 1]], earn: ['tfidf', 'c_tfidf'] },
+    ],
+    draw: (k, an) => {
+      const pesos = k >= 3;
+      const linhas = DOCS.map((d, i) => rotDoc(d, { vals: k >= 1 ? (pesos ? TFIDF[i] : BOW[i]) : COLS.map(() => null), fmt: pesos ? v => fmtPeso(v) : null, cls: pesos ? v => tom(v) : null, pop: an === 1 || an === 3, d: i * 200 }));
+      return [
+        matriz(COLS, linhas, { rodape: k >= 2 ? { rot: 'IDF', vals: IDF, fmt: v => n2(v), cls: v => v === 1 ? 'min' : '', pop: an === 2 } : null }),
+        h('p', { class: 'nota' }, k >= 3 ? 'Em cada linha, a palavra “café” tem o menor peso.' : k >= 2 ? '“café” aparece nos três textos: IDF 1,00. As outras aparecem em um só: IDF 1,69.' : ''),
+      ];
+    } },
+
+  { id: 'cosseno', parte: 2, ic: 'angulo', q: 'Similaridade de cosseno',
+    res: 'O cosseno mede se dois vetores apontam para a mesma direção. Com as linhas de comprimento 1, ele é a soma dos produtos coluna a coluna: só as palavras que os dois textos têm contam. Vai de 0, nenhuma palavra em comum, a 1, mesma direção.',
+    take: 'O cosseno cresce com as palavras em comum, pesadas pelo TF-IDF.',
+    passos: [
+      { label: 'Multiplicar coluna a coluna', code: [['cosine_similarity(', 'o cosseno entre vetores', 1], ['X[0], X[1])', 'o tweet e o livro']], earn: ['cosseno', 'c_cos'] },
+      { label: 'Somar os produtos', code: [['cosine_similarity(', 'o cosseno entre vetores'], ['X[0], X[1])', 'o tweet e o livro']] },
+      { label: 'Comparar o tweet com o artigo', code: [['cosine_similarity(', 'o cosseno entre vetores'], ['X[0], X[2])', 'o tweet e o artigo', 1]] },
+    ],
+    draw: (k, an) => {
+      const b = k >= 3 ? 2 : 1, prod = TFIDF[0].map((v, j) => v * TFIDF[b][j]), cos = prod.reduce((s, v) => s + v, 0);
+      const linhas = [rotDoc(DOCS[0], { vals: TFIDF[0], fmt: v => fmtPeso(v, true), cls: v => tom(v) }), rotDoc(DOCS[b], { vals: TFIDF[b], fmt: v => fmtPeso(v, true), cls: v => tom(v), pop: an === 3 })];
+      if (k >= 1) linhas.push({ rot: 'produto', vals: prod, fmt: v => v ? n2(v) : '0', cls: v => v ? 'prod' : '', pop: an === 1 || an === 3, d: 300 });
+      return [
+        matriz(COLS, linhas),
+        h('div', { class: 'res' + (an === 2 || an === 3 ? ' pop' : '') }, k >= 2 ? [h('span', { class: 'rot' }, `cosseno ${DOCS[0].rot} × ${b === 1 ? 'livro' : 'artigo'}`), h('span', { class: 'val' }, n2(cos))] : h('span', { class: 'rot', style: 'visibility:hidden' }, '·')),
+      ];
+    } },
+
+  { id: 'busca', parte: 2, ic: 'lupa', q: 'Busca por similaridade',
+    res: 'Uma busca recebe uma consulta e devolve os textos mais parecidos com ela. A consulta vira um vetor com o mesmo vocabulário do corpus; depois, o cosseno entre ela e cada texto ordena o resultado, do maior para o menor.',
+    take: 'O tweet que diz que não tomou café vem em primeiro: a busca compara palavras, não o sentido.',
+    passos: [
+      { label: 'Transformar a consulta em vetor', code: [['q = vet.transform(["tomei café"])', 'a consulta, com o vocabulário e o IDF do corpus', 1]], earn: ['consulta'] },
+      { label: 'Comparar com cada texto', code: [['cosine_similarity(q, X)', 'o cosseno da consulta com cada texto', 1]], earn: ['busca'] },
+    ],
+    draw: (k, an) => {
+      const ordem = [0, 1, 2].sort((a, b) => QCOS[b] - QCOS[a]);
+      const marca = txt => txt.split(/(\s+)/).map(p => /(^|#)(tomei|café)(?!\p{L})/u.test(p) ? h('span', { class: 'hit' }, p) : p);
+      return [
+        h('div', { class: 'centro' }, h('div', { class: 'frase' }, CONSULTA)),
+        k >= 1 ? matriz(COLS, [{ rot: 'consulta', vals: QV, fmt: v => fmtPeso(v, true), cls: v => tom(v), pop: an === 1 }]) : null,
+        k >= 2 ? h('section', { class: 'box', 'aria-label': 'Resultado da busca', style: 'gap:6px' },
+          h('div', { class: 'bh', style: 'padding:0 14px' }, lbl('Resultado'), lbl('cosseno')),
+          ordem.map((i, r) => h('div', { class: 'rk' + (r === 0 ? ' top' : '') + (an === 2 ? ' pop' : ''), style: an === 2 ? `animation-delay:${r * 150}ms` : null },
+            h('span', { class: 'quem' }, icon(DOCS[i].ic), DOCS[i].rot === 'artigo científico' ? 'artigo' : DOCS[i].rot), h('span', { class: 'txt' }, marca(DOCS[i].txt)),
+            h('span', { class: 'track' }, h('span', { class: 'fill', style: `width:${QCOS[i] * 100}%` })), h('span', { class: 'val' }, n2(QCOS[i]))))) : null,
+      ];
+    } },
+];
+const PARTES = { 1: 'Do texto aos tokens', 2: 'Dos tokens aos vetores' };
+
+/* ---------- vocabulário: conceitos e chamadas ---------- */
+const CHIPS = {
+  corpus: ['corpus', 'O conjunto de textos com que se trabalha.'],
+  documento: ['documento', 'Cada texto do corpus, qualquer que seja o tamanho.'],
+  token: ['token', 'Cada unidade em que o texto é cortado: palavra, pontuação, símbolo ou pedaço de palavra.'],
+  c_split: ['texto.split()', 'Corta onde houver espaço. A pontuação fica grudada na palavra.', 'cmd'],
+  tokenizador: ['tokenizador', 'O que corta o texto em tokens, seguindo regras.'],
+  c_wt: ['word_tokenize(texto, language="portuguese")', 'O tokenizador de palavras do NLTK.', 'cmd'],
+  vocabulario: ['vocabulário', 'A lista dos tokens diferentes do corpus.'],
+  identificador: ['identificador', 'O número de cada token no vocabulário.'],
+  fora: ['fora do vocabulário', 'Um token que não aparece no corpus e por isso não tem identificador.'],
+  subpalavra: ['subpalavra', 'Um pedaço de palavra que é token do vocabulário.'],
+  bpe: ['BPE', 'Byte Pair Encoding: junta, passo a passo, o par vizinho mais frequente, até o vocabulário ter o tamanho pedido.'],
+  c_bpe: ['BpeTrainer(vocab_size=…)', 'Treina um tokenizador BPE (biblioteca tokenizers).', 'cmd'],
+  normalizacao: ['normalização', 'Reduzir variações que não importam para a tarefa, como maiúsculas e pontuação.'],
+  c_lower: ['t.lower()', 'O token em minúsculas.', 'cmd'],
+  stopword: ['stop word', 'Palavra muito frequente que costuma ser tirada antes de representar o texto.'],
+  c_stop: ['stopwords.words("portuguese")', 'A lista de stop words do NLTK para o português.', 'cmd'],
+  stemming: ['stemming', 'Cortar o fim da palavra por regras. O resultado pode não ser uma palavra.'],
+  c_stem: ['RSLPStemmer().stem(p)', 'O stemmer do NLTK para o português.', 'cmd'],
+  lematizacao: ['lematização', 'Trocar a palavra pela forma de dicionário, analisando a frase.'],
+  c_lema: ['token.lemma_', 'O lema de um token analisado pelo spaCy.', 'cmd'],
+  bow: ['bag-of-words', 'Cada texto vira um vetor de contagens, uma coluna por palavra do vocabulário. A ordem se perde.'],
+  matriz: ['matriz documento × termo', 'Uma linha por texto, uma coluna por palavra.'],
+  esparsa: ['esparsa', 'Com quase todas as células iguais a zero.'],
+  c_cv: ['CountVectorizer()', 'Monta o bag-of-words no scikit-learn.', 'cmd'],
+  ngrama: ['n-grama', 'Sequência de n palavras vizinhas. Bigrama: duas palavras.'],
+  c_ngram: ['ngram_range=(1, 2)', 'Conta palavras soltas e pares de palavras vizinhas.', 'cmd'],
+  idf: ['IDF', 'Peso que diminui quanto mais textos do corpus têm a palavra.'],
+  tfidf: ['TF-IDF', 'A contagem de cada palavra multiplicada pelo IDF dela.'],
+  c_tfidf: ['TfidfVectorizer()', 'Monta a matriz TF-IDF no scikit-learn.', 'cmd'],
+  cosseno: ['similaridade de cosseno', 'Mede se dois vetores apontam para a mesma direção. De 0 a 1 com contagens e pesos.'],
+  c_cos: ['cosine_similarity(a, b)', 'O cosseno entre vetores no scikit-learn.', 'cmd'],
+  consulta: ['consulta', 'O texto da busca, transformado em vetor com o vocabulário do corpus.'],
+  busca: ['busca por similaridade', 'Ordenar os textos pelo cosseno com a consulta.'],
+};
+function renderTray(fresh) {
+  const ids = earned.filter(id => CHIPS[id]);
+  $('#tray').replaceChildren(h('div', { class: 'lbl' }, icon('vocab'), 'Vocabulário', h('span', { class: 'n' }, `${ids.length} / ${Object.keys(CHIPS).length}`)),
+    h('div', { class: 'vchips', id: 'vchips' }, ids.map(id => h('span', { class: 'vchip' + (CHIPS[id][2] ? ' cmd' : '') + (id === fresh ? ' new' : ''), tabindex: '0', 'data-tip': CHIPS[id][1] }, CHIPS[id][0]))));
+}
+async function earn(id, anchor) {
+  if (earned.includes(id) || !CHIPS[id]) return;
+  earned.push(id); save();
+  if (!anchor || reduce || !anchor.isConnected) { renderTray(id); return; }
+  const a = anchor.getBoundingClientRect();
+  const fl = h('span', { class: 'vchip float' + (CHIPS[id][2] ? ' cmd' : '') }, CHIPS[id][0]); document.body.append(fl);
+  fl.style.left = Math.max(8, Math.min(innerWidth - fl.offsetWidth - 8, a.left + a.width / 2 - fl.offsetWidth / 2)) + 'px';
+  fl.style.top = Math.max(8, Math.min(innerHeight - 40, a.top - fl.offsetHeight - 10)) + 'px';
+  await sleep(1000);
+  const tr = $('#vchips').getBoundingClientRect(), f = fl.getBoundingClientRect();
+  const tx = Math.min(innerWidth - 60, tr.left + 20 + earned.length * 30), ty = Math.min(innerHeight - 20, tr.top + 12);
+  fl.style.transform = `translate(${tx - f.left}px,${ty - f.top}px) scale(.8)`; fl.style.opacity = '.4';
+  await sleep(700); fl.remove(); renderTray(id);
+}
+
+/* ---------- a chamada de biblioteca decomposta ---------- */
+function anatomia(parts) {
+  if (!parts) return h('div', { class: 'cmdl' });
+  return h('div', { class: 'cmdl' }, parts.map(([t, nota, novo]) => h('span', { class: 'part' + (novo ? ' novo' : '') }, h('code', {}, t), h('small', {}, nota || ' '))));
+}
+
+/* ---------- estrutura ---------- */
+let S = {}, cur = 0, epoch = 0;
+function markDone(id) { if (!done.has(id)) { done.add(id); save(); renderRail(); } }
+function focus(el) { document.querySelectorAll('.pulsing').forEach(b => b.classList.remove('pulsing')); if (el) el.classList.add('pulsing'); }
+function renderRail() {
+  const bt = (s, i) => h('button', { type: 'button', class: 'rb' + (done.has(s.id) ? ' done' : '') + (i === cur ? ' cur' : ''), 'data-tip': s.q, 'aria-label': `Estação ${i + 1}: ${s.q}`, 'aria-current': i === cur ? 'step' : null, onclick: () => go(i) }, done.has(s.id) && i !== cur ? icon('check') : String(i + 1));
+  const kids = []; STATIONS.forEach((s, i) => { if (i && s.parte !== STATIONS[i - 1].parte) kids.push(h('span', { class: 'sep', 'aria-hidden': 'true' })); kids.push(bt(s, i)); });
+  $('#rail').replaceChildren(...kids);
+}
+function renderWipe(asking) {
+  const w = $('#wipe'); w.classList.toggle('confirm', asking); w.replaceChildren(); put(w, icon('lixeira'), asking ? h('span', {}, 'Apagar tudo?') : null);
+  w.setAttribute('data-tip', asking ? 'Clique de novo para apagar todo o progresso' : 'Apagar todo o progresso');
+  w.onclick = asking ? wipeAll : () => { renderWipe(true); setTimeout(() => { if (w.classList.contains('confirm')) renderWipe(false); }, 4000); };
+}
+function wipeAll() { epoch++; earned = []; done = new Set(); S = {}; save(); renderWipe(false); renderTray(); go(0); }
+function go(i) { cur = Math.max(0, Math.min(STATIONS.length - 1, i)); renderStation(); try { history.replaceState(null, '', '#' + STATIONS[cur].id); } catch (e) {} window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); }
+function renderStation() {
+  epoch++; const my = epoch; hideTip(); focus(null);
+  const st = STATIONS[cur], root = $('#station'), n = st.passos.length;
+  const s = S[st.id] = S[st.id] || { k: 0 };
+  $('#titulo').textContent = PARTES[st.parte];
+  document.title = PARTES[st.parte] + ' · ' + st.q;
+  const stage = h('section', { class: 'stage', 'aria-live': 'polite' });
+  const take = h('p', { class: 'take' + (s.k >= n ? '' : ' vazio') }, icon('check'), h('span', {}, st.take));
+  const ctlL = h('div', {}), passos = h('div', { class: 'passos' });
+  const next = cur < STATIONS.length - 1 ? h('button', { type: 'button', class: 'btn nav-next' + (done.has(st.id) ? ' ready' : ''), onclick: () => go(cur + 1) }, h('span', {}, 'Próxima'), h('span', { class: 'nq' }, STATIONS[cur + 1].q), icon('dir')) : h('span', { style: 'width:46px' });
+  let busy = false;
+  function draw(an) {
+    ctlL.replaceChildren(anatomia(s.k > 0 ? st.passos[s.k - 1].code : null));
+    stage.replaceChildren(...[st.draw(s.k, an)].flat().filter(Boolean));
+    const acabou = s.k >= n;
+    const btn = h('button', { type: 'button', class: 'btn guia', onclick: clique }, icon(acabou ? 'recomecar' : 'play'), h('span', {}, acabou ? 'Ver de novo' : st.passos[s.k].label));
+    passos.replaceChildren(h('span', { class: 'dots' }, st.passos.map((p, i) => h('span', { class: 'dot' + (i < s.k ? ' on' : i === s.k ? ' cur' : ''), 'data-tip': p.label }))), btn);
+    focus(acabou ? (done.has(st.id) ? next : null) : btn);
+    return btn;
+  }
+  async function clique() {
+    if (busy) return;
+    if (s.k >= n) { s.k = 0; take.classList.add('vazio'); draw(); return; }
+    const kb = passos.contains(document.activeElement); busy = true;
+    s.k++; const btn = draw(s.k); btn.disabled = true; if (kb) btn.focus({ preventScroll: true });
+    const p = st.passos[s.k - 1];
+    for (const id of p.earn || []) { earn(id, stage); await sleep(260); if (my !== epoch) return; }
+    await sleep(500); if (my !== epoch) return;
+    busy = false; btn.disabled = false;
+    if (s.k >= n) { take.classList.remove('vazio'); markDone(st.id); next.classList && next.classList.add('ready'); focus(next.classList ? next : null); }
+  }
+  root.replaceChildren(
+    h('div', { class: 'st-head' }, h('span', { class: 'st-ic' }, icon(st.ic)), h('h2', {}, st.q)),
+    h('p', { class: 'resumo' }, rico(st.res)),
+    h('div', { class: 'ctl' }, ctlL, passos),
+    stage, take,
+    h('div', { class: 'nav' }, h('button', { type: 'button', class: 'btn ghost', onclick: () => go(cur - 1), disabled: cur === 0, 'aria-label': 'Estação anterior' }, icon('esq')), h('span', { class: 'count' }, `${cur + 1} / ${STATIONS.length}`), next));
+  draw();
+  renderRail();
+}
+
+/* ---------- início ---------- */
+(function boot() {
+  const id = (location.hash || '').slice(1);
+  const i = STATIONS.findIndex(s => s.id === id);
+  cur = i >= 0 ? i : 0;
+  renderWipe(false); renderTray(); renderStation();
+})();
+</script>
+</body>
+</html>
