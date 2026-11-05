@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Como o contexto vira vetor</title><style>:root{
+  --paper:#ffffff;--ink:#1f2023;--muted:#6b6f76;--faint:#b4b7bd;--line:#d9dadf;--soft:#f3f3f5;--surface-2:#e9e9ed;
+  --edge:#d3d4d9;--edge2:#c3c5ca;
+  --brand:#f97316;--brand-soft:#fed7aa;--brand-faint:#fff7ed;--act:#c2410c;--on-act:#ffffff;
+  --ok:#1a9e55;--bad:#e02020;--bad-soft:#fde2e2;
+  --font-text:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#15171b;--ink:#e8e7e4;--muted:#9a9ea5;--faint:#5d6168;--line:#33373e;--soft:#1e2126;--surface-2:#282c33;
+  --edge:#3a3f47;--edge2:#4b5059;
+  --brand:#ff9b54;--brand-soft:#5c3413;--brand-faint:#2a1d12;--act:#ff9b54;--on-act:#15171b;
+  --ok:#2ecc71;--bad:#ff5c5c;--bad-soft:#4a1f1f;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#15171b;--ink:#e8e7e4;--muted:#9a9ea5;--faint:#5d6168;--line:#33373e;--soft:#1e2126;--surface-2:#282c33;
+  --edge:#3a3f47;--edge2:#4b5059;
+  --brand:#ff9b54;--brand-soft:#5c3413;--brand-faint:#2a1d12;--act:#ff9b54;--on-act:#15171b;
+  --ok:#2ecc71;--bad:#ff5c5c;--bad-soft:#4a1f1f;color-scheme:dark}
+
+
+*{box-sizing:border-box} [hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 var(--font-text)}
+.wrap{max-width:1240px;margin:auto;padding:16px 24px 24px}
+.top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;margin-bottom:16px}
+h1{font-size:17px;margin:0;font-weight:800;letter-spacing:-.01em}.rail{display:flex;gap:8px}
+.rb{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper);color:var(--muted);font:700 13px var(--font-text);cursor:pointer}
+.rb.cur{border-color:var(--ink);color:var(--ink);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
+.tools{display:flex;justify-content:flex-end}main{max-width:1040px;margin:auto}
+.st-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}.st-ic{width:34px;height:34px;border-radius:9px;background:var(--brand-soft);color:var(--act);display:grid;place-items:center}
+h2{font-size:26px;line-height:1.2;margin:0;font-weight:800;letter-spacing:-.015em}
+.ic{display:inline-flex;width:1.25em;height:1.25em;flex:none}.ic svg{width:100%;height:100%}
+button,input{font:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--act);outline-offset:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:9px;padding:8px 14px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);font-size:14px;font-weight:700;text-decoration:none}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}.btn:disabled{opacity:.35;cursor:default}.quad{width:40px;height:40px;padding:0}
+.opc{padding:5px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:500 14px var(--font-mono)}
+.opc[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--paper);font-weight:700}
+.controls{display:flex;align-items:center;justify-content:center;gap:10px;min-height:44px;margin:12px 0;flex-wrap:wrap}
+.lbl{font:800 12px var(--font-text);color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.scene{border:1.5px solid var(--line);border-radius:14px;padding:10px 20px;overflow:hidden}
+.context-scene{min-height:350px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:38px}
+.sentence{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
+.token{border:1.5px solid transparent;border-radius:8px;padding:6px 11px;background:var(--soft);color:var(--ink);font:500 20px var(--font-mono)}
+.token.target{background:var(--ink);color:var(--paper);font-weight:700}.token.context{border-color:var(--act);background:var(--brand-soft);font-weight:700}
+.sentence.small .token{font-size:15px;padding:3px 8px}.legend{display:flex;gap:24px;justify-content:center;color:var(--muted);font-size:14px;align-items:center}.swatch{display:inline-block;width:12px;height:12px;background:var(--ink);border-radius:3px;margin-right:7px}.swatch.ctx{background:var(--brand-soft);border:1.5px solid var(--act)}
+.plot{display:block;width:100%;height:300px}.plot text{font:600 15px var(--font-mono);fill:var(--ink)}.plot .axis{stroke:var(--line);stroke-width:1.3}.plot .tick{font-size:11px;fill:var(--muted)}.plot .trail{stroke:var(--brand);stroke-width:2;fill:none;stroke-dasharray:4 5}.plot .point{fill:var(--ink)}.plot .selected .point{fill:var(--brand)}.plot .selected text{fill:var(--act);font-weight:800}.plot [role=button]{cursor:pointer}
+.coord{display:flex;align-items:center;justify-content:center;gap:16px;min-height:40px;font:700 19px var(--font-mono)}.coord span{background:var(--soft);padding:3px 10px;border-radius:8px}.coord strong{color:var(--act)}
+.timeline{display:flex;align-items:center;gap:12px;margin:9px 0 7px}.timeline input{flex:1;min-width:50px;accent-color:var(--act)}.clock{font:600 13px var(--font-mono);min-width:112px;text-align:right;color:var(--muted)}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:14px;margin-top:12px}.count{font-size:13px;color:var(--muted)}
+.corpus{color:var(--muted);font-size:13px;text-align:center;margin-top:10px}.corpus summary{cursor:pointer}.corpus p{margin:6px;font-family:var(--font-mono)}
+.network{width:100%;height:300px;display:block}.network text{font-family:var(--font-mono);fill:var(--ink);font-size:18px}.network .head{font:800 12px var(--font-text);fill:var(--muted);text-anchor:middle}.network .edge{stroke:var(--line);stroke-width:1.2}.network .edge.active{stroke:var(--brand);stroke-width:2}.network .node{fill:var(--paper);stroke:var(--line);stroke-width:1.5}.network .node.active{fill:var(--brand-soft);stroke:var(--act)}.network .bar{fill:var(--soft)}.network .fill{fill:var(--faint)}.network .correct .fill{fill:var(--brand)}.network .correct text{fill:var(--act);font-weight:800}.network .mean{fill:var(--brand-faint);stroke:var(--act);stroke-width:1.5}
+.task{display:flex;justify-content:center;align-items:center;gap:14px;min-height:40px;margin-bottom:8px}.task strong{color:var(--act)}.task .arrow{color:var(--muted);font-size:22px}.task .group{display:flex;gap:6px}
+.caption{text-align:center;color:var(--muted);font-size:14px;margin:8px 0 0;min-height:21px}.word-picker{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}.word-picker .opc{font-size:12px;padding:3px 9px}
+.top{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.rail{gap:5px}
+.number-sentence{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.number-word{border:1.5px solid var(--line);background:var(--paper);border-radius:9px;padding:9px 10px;color:var(--ink);font:16px var(--font-mono);display:flex;flex-direction:column;gap:12px;align-items:center}.number-word.selected{border-color:var(--act);background:var(--brand-faint)}.components{display:flex;gap:5px}.components span{font-size:14px;background:var(--soft);border-radius:5px;padding:3px}.numbers-scene{gap:25px}.number-editor label{display:flex;flex-direction:column;gap:5px}.number-editor input{width:95px;padding:7px;border:1.5px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);font-family:var(--font-mono)}
+.examples-scene{min-height:350px;display:flex;flex-direction:column;justify-content:center;gap:28px}.pair-list{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}.pair{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:12px 18px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:9px;font:700 18px var(--font-mono)}.pair.selected{border-color:var(--act);background:var(--brand-faint)}
+.correction-scene{min-height:300px;display:flex;flex-direction:column;justify-content:center;gap:20px}.weight-row{display:flex;align-items:center;justify-content:center;gap:15px;flex-wrap:wrap}.weight-row>strong{min-width:65px;color:var(--act);font-family:var(--font-mono)}.weight-value{background:var(--soft);padding:5px 10px;border-radius:8px;font:700 18px var(--font-mono);min-width:95px;text-align:center}.weight-value small{color:var(--muted);font-size:14px}.prediction{display:flex;flex-direction:column;align-items:center;gap:8px;min-height:110px}.prediction>strong{font:800 26px var(--font-mono);color:var(--act)}.placeholder{color:var(--muted)}.expected{font-size:14px}.probability-track{position:relative;width:280px;height:14px;background:var(--soft);border-radius:8px}.probability-fill{height:100%;background:var(--brand);border-radius:8px}.probability-goal{position:absolute;right:0;top:-3px;height:20px;border-right:3px solid var(--ink)}
+.network .weight rect{fill:var(--paper);stroke:var(--act);stroke-width:1.3}.network .weight text{font-size:14px;fill:var(--act);font-weight:700}.network .output-weight rect{stroke:var(--muted)}.network .output-weight text{fill:var(--muted)}
+.token.outro-contexto{border:1.5px dashed var(--act);background:transparent}.outro-par{border:1.5px dashed var(--act);border-radius:8px;padding:1px 8px;font:500 13px var(--font-mono);color:var(--muted)}.task{flex-wrap:wrap}.frases-epoca{display:flex;justify-content:center;gap:22px;flex-wrap:wrap}
+.swatch.outro{background:transparent;border:1.5px dashed var(--act)}.par-grande{display:flex;justify-content:center;align-items:flex-end;gap:24px;font:800 30px var(--font-mono)}.par-grande div{display:flex;flex-direction:column;align-items:center;gap:4px}.par-grande strong{color:var(--act)}.par-grande .arrow{color:var(--muted);font-weight:500}
+.calc thead th:nth-child(1){width:14%}.calc thead th:nth-child(2),.calc thead th:nth-child(3){width:13%}.calc thead th:nth-child(4){width:14%}.calc thead th:nth-child(5){width:34%}.calc thead th:nth-child(6){width:12%}.calc td.mudou{background:var(--brand-faint)}.legendas{min-height:58px}.conta div{white-space:pre}
+.conta-scene{display:flex;flex-direction:column;gap:8px;padding:10px 16px}.vetor{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}.vetor .weight-value{font-size:15px;padding:3px 10px}.vetor small{font-weight:500}.rot{font:700 13px var(--font-mono);color:var(--muted)}
+.tabela-wrap{overflow-x:auto}.calc{table-layout:fixed;border-collapse:collapse;width:100%;font:500 14px var(--font-mono);font-variant-numeric:tabular-nums}.calc th,.calc td{padding:3px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}.calc thead th{font:700 12px var(--font-mono);color:var(--muted)}.calc tbody th{text-align:left;font-weight:500}.calc thead th:first-child{text-align:left}.calc tbody tr{cursor:pointer}.calc tbody tr:hover{background:var(--soft)}.calc tr.ctx{background:var(--brand-faint)}.calc tr.ctx th,.calc tr.ctx td:nth-child(n+5){color:var(--act);font-weight:700}.calc tr.sel th{box-shadow:inset 3px 0 0 var(--ink)}.calc td small{color:var(--muted);font-size:12px}.calc b{font-weight:700}.calc tfoot td{font-weight:700;border-bottom:0}
+.row-btn{background:none;border:0;padding:0 0 0 4px;color:inherit;font:inherit;text-decoration:underline dotted;text-underline-offset:3px}.row-btn[aria-pressed=true]{font-weight:800}.mini{display:inline-block;width:64px;height:9px;margin-right:8px;background:var(--soft);border-radius:5px;overflow:hidden;vertical-align:middle}.mini i{display:block;height:100%;background:var(--faint)}.ctx .mini i{background:var(--brand)}
+.conta{background:var(--soft);border-radius:10px;padding:7px 14px;font:500 14px/1.6 var(--font-mono);overflow-x:auto}.conta div{white-space:nowrap}.conta .t{font:800 12px/1.8 var(--font-text);color:var(--muted)}.conta sup{font-size:.72em;line-height:0}.conta small{color:var(--muted);font-family:var(--font-text);font-size:12.5px;white-space:pre}
+@media(max-width:1000px){.top{grid-template-columns:1fr auto}.rail{grid-column:1/-1;grid-row:2;justify-content:center}}
+@media(max-width:760px){.wrap{padding:14px}.top{grid-template-columns:1fr auto;gap:16px}.rail{grid-column:1/-1;grid-row:2;justify-content:center}.scene{padding:12px 8px}.token{font-size:16px;padding:5px 8px}.plot{height:300px}.network{height:auto;min-height:290px}.calc{min-width:620px}.par-grande{font-size:24px}.nav .next-label{display:none}.clock{min-width:80px;font-size:11px}.timeline{gap:7px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<div class="wrap"><header class="top"><h1 id="titulo">Como o contexto vira vetor</h1><nav class="rail" id="rail" aria-label="Estações"></nav><div class="tools"><button type="button" class="btn ghost quad" id="reset" aria-label="Reiniciar demonstração" title="Reiniciar demonstração">↺</button></div></header><main id="station"></main></div>
+<script>
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = (q, root=document) => root.querySelector(q);
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v === false || v == null) continue;
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k, '');
+    else e.setAttribute(k, v);
+  }
+  for (const c of kids.flat(Infinity)) { if (c == null || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return e;
+}
+const ICONS = {
+  play: '<path d="M8 5.5v13l10-6.5z" fill="currentColor" stroke="none"/>',
+  pausa: '<path d="M8 5v14M16 5v14" stroke-width="3"/>',
+  recomecar: '<path d="M4 12a8 8 0 1 0 2.34-5.66"/><path d="M4 4v4h4"/>',
+  esq: '<path d="M15 5 8 12l7 7"/>', dir: '<path d="m9 5 7 7-7 7"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  vocab: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>',
+  lixeira: '<path d="M5 7h14M9 7V4h6v3M8 7l1 13h6l1-13"/>',
+  grade: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>',
+  janela: '<rect x="3" y="7" width="18" height="10" rx="2"/><path d="M9 7v10M15 7v10"/>',
+  rede: '<circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 7l3 3.5M7 17l3-3.5M14 10.5 17 7M14 13.5l3 3.5"/>',
+  passo: '<path d="M5 19 19 5M12 5h7v7"/>',
+  plano: '<path d="M4 20V4M4 20h16"/><circle cx="9" cy="14" r="1.6"/><circle cx="15" cy="9" r="1.6"/>',
+  entrada: '<path d="M20 12h-9M14 6l-6 6 6 6"/><path d="M4 5v14"/>',
+  lupa: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
+};
+function icon(n) { const sp = document.createElement('span'); sp.className = 'ic'; sp.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`; return sp; }
+
+
+const n2 = n => (n < -.005 ? '−' : '') + Math.abs(n).toFixed(2).replace('.', ',');
+const FRASES_LONGAS = ['hoje eu bebi um café quente depois do almoço', 'hoje eu bebi um chá quente depois do almoço', 'hoje eu bebi um xurupa quente depois do almoço'];
+const TOKENS_LONGOS = FRASES_LONGAS.map(f => f.split(' '));
+const FRASES = ['bebi um café quente', 'bebi um chá quente', 'bebi um xurupa quente'];
+const TOKENS = FRASES.map(f => f.split(' '));
+const VOC = [...new Set(TOKENS.flat())];
+const IX = Object.fromEntries(VOC.map((w,i) => [w,i]));
+const LR = .1, EPOCHS = 300;
+const clone = A => A.map(r => r.slice());
+const dot = (a,b) => a[0]*b[0]+a[1]*b[1];
+function softmax(z) { const m=Math.max(...z), ex=z.map(v=>Math.exp(v-m)), sum=ex.reduce((a,b)=>a+b,0); return ex.map(v=>v/sum); }
+const predict = (F,v) => softmax(F.O.map(r=>dot(r,v)));
+function rng(seed) { let s=seed>>>0; return () => {s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;}; }
+function assigned(seed) {
+  const r=rng(seed), extra=rng(seed ^ 0x9e3779b9);
+  return VOC.map(()=>[r()*2-1,r()*2-1,extra()*2-1]);
+}
+function initial(seed) {
+  const r=rng(seed); VOC.forEach(()=>{r();r();});
+  return {I:state.values.map(v=>v.slice(0,2)),O:VOC.map(()=>[r()*2-1,r()*2-1])};
+}
+function examples(radius, model) {
+  return TOKENS.flatMap((t,f)=>t.flatMap((w,i)=>{
+    const neighbors=t.map((_,j)=>j).filter(j=>j!==i&&Math.abs(j-i)<=radius);
+    return model==='cb' ? [{f,i,js:neighbors,inputs:neighbors.map(j=>IX[t[j]]),answer:IX[w]}]
+      : neighbors.map(j=>({f,i,js:[j],inputs:[IX[w]],answer:IX[t[j]]}));
+  }));
+}
+function update(F,ex) {
+  const v=[0,1].map(d=>ex.inputs.reduce((sum,i)=>sum+F.I[i][d],0)/ex.inputs.length);
+  const g=predict(F,v);g[ex.answer]-=1;
+  const gv=[0,1].map(d=>F.O.reduce((sum,r,j)=>sum+r[d]*g[j],0));
+  F.O.forEach((r,j)=>r.forEach((_,d)=>r[d]-=LR*g[j]*v[d]));
+  ex.inputs.forEach(i=>[0,1].forEach(d=>F.I[i][d]-=LR*gv[d]/ex.inputs.length));
+}
+const copyFrame = F => ({I:clone(F.I),O:clone(F.O)});
+const defaults=()=>({radius:1,seed:31,values:assigned(31),dimensions:1,word:'café',phrase:0,target:4,parE4:0,correctionPhase:0,linha:null,modoPasso:false,sgTick:0,cbTick:0,sgExample:0,cbExample:2,cbPhase:0});
+const state=defaults();
+let models={},current=0,timer=null;
+function model(kind='sg') {
+  if(models[kind]) return models[kind];
+  let ex=examples(1,kind);
+  if(kind==='sg'){const c=ex.findIndex(x=>x.f===0&&TOKENS[0][x.i]==='café'&&TOKENS[0][x.js[0]]==='um');ex=ex.slice(c).concat(ex.slice(0,c));}
+  const F=initial(state.seed),frames=[copyFrame(F)];
+  for(let e=0;e<EPOCHS;e++){ex.forEach(x=>update(F,x));frames.push(copyFrame(F));}
+  const pts=frames.flatMap(F=>F.I);
+  const lim=d=>Math.max(1.4,...pts.map(v=>Math.abs(v[d])))+.45;
+  return models[kind]={ex,frames,Rx:lim(0),Ry:lim(1),cacheEpoch:-1,steps:[]};
+}
+function frame(kind,tick) {
+  const M=model(kind),N=M.ex.length,epoch=Math.floor(tick/N),rem=tick%N;
+  if(!rem) return M.frames[epoch];
+  if(M.cacheEpoch!==epoch){const F=copyFrame(M.frames[epoch]);M.steps=[copyFrame(F)];M.ex.forEach(ex=>{update(F,ex);M.steps.push(copyFrame(F));});M.cacheEpoch=epoch;}
+  return M.steps[rem];
+}
+function resetTraining(){stop();models={};state.sgTick=state.cbTick=0;state.sgExample=state.cbPhase=state.correctionPhase=0;state.cbExample=2;state.linha=null;state.modoPasso=false;}
+function reshuffle(){state.seed=(state.seed+1)>>>0;state.values=assigned(state.seed);resetTraining();render();}
+function stop(){if(timer)clearInterval(timer);timer=null;}
+const STATIONS=[
+  {id:'contexto',title:'Contexto',ic:'janela'},
+  {id:'numeros',title:'Quantos números por palavra?',ic:'grade'},
+  {id:'posicoes',title:'Dois números, uma posição',ic:'plano'},
+  {id:'exemplos',title:'Do contexto aos pares',ic:'janela'},
+  {id:'corrigir',title:'Uma correção de cada vez',ic:'passo'},
+  {id:'treino',title:'Repetir as correções',ic:'plano'},
+  {id:'rede',title:'Os mesmos pesos na rede',ic:'rede'},
+  {id:'embedding',title:'O embedding de cada palavra',ic:'lupa'},
+  {id:'skipgram',title:'Skip-gram: da palavra ao contexto',ic:'rede'},
+  {id:'cbow',title:'CBOW: do contexto à palavra',ic:'entrada'}
+];
+const stationId=()=>STATIONS[current].id;
+const button=(label,action,cls='btn ghost',props={})=>h('button',{type:'button',class:cls,onclick:action,...props},label);
+function phrase(f,target,neighbors,interactive=false,toks=TOKENS,outros=[]){
+  return h('div',{class:'sentence'+(interactive?'':' small')},toks[f].map((w,i)=>h(interactive?'button':'span',{
+    ...(interactive?{type:'button',onclick:()=>{state.target=i;render();},'aria-pressed':String(i===target)}:{}),
+    class:'token'+(i===target?' target':neighbors.includes(i)?' context':outros.includes(i)?' outro-contexto':'')
+  },w)));
+}
+const outrosContextos=ex=>[ex.i-1,ex.i+1].filter(j=>j>=0&&j<TOKENS[ex.f].length&&!ex.js.includes(j));
+const phrasePar=ex=>phrase(ex.f,ex.i,ex.js,false,TOKENS,outrosContextos(ex));
+function corpusDetails(){return h('details',{class:'corpus'},h('summary',{},'Corpus'),FRASES.map(f=>h('p',{},f)));}
+function coords(F){const v=F.I[IX[state.word]];return h('div',{class:'coord','aria-live':'polite'},h('strong',{},state.word),h('span',{},n2(v[0])),h('span',{},n2(v[1])));}
+function svgNode(markup){const t=document.createElement('template');t.innerHTML=markup;return t.content.firstChild;}
+function plot(F,M,trail=false,origin=false){
+  const W=940,H=300,pad=32,scale=Math.min((W-2*pad)/(2*M.Rx),(H-2*pad)/(2*M.Ry));
+  const px=v=>[W/2+v[0]*scale,H/2-v[1]*scale];
+  let s=`<line class="axis" x1="20" y1="${H/2}" x2="${W-20}" y2="${H/2}"/><line class="axis" x1="${W/2}" y1="14" x2="${W/2}" y2="${H-14}"/><text class="tick" x="${W-25}" y="${H/2-9}">x</text><text class="tick" x="${W/2+8}" y="20">y</text><text class="tick" x="${W/2+7}" y="${H/2+15}">0</text>`;
+  if(trail&&state.sgTick){const end=Math.floor(state.sgTick/M.ex.length);const path=M.frames.slice(0,end+1).map(F=>px(F.I[IX[state.word]]));path.push(px(F.I[IX[state.word]]));s+=`<polyline class="trail" points="${path.map(p=>p.join(',')).join(' ')}"/>`;}
+  for(const a of [-1,1]){const p=px([a*M.Rx,0]);s+=`<text class="tick" text-anchor="middle" x="${p[0]}" y="${H/2+15}">${n2(a*M.Rx)}</text>`;}
+  const groups=[];
+  VOC.forEach((w,i)=>{const p=px(F.I[i]),g=groups.find(g=>Math.hypot(g.v[0]-F.I[i][0],g.v[1]-F.I[i][1])<.005);if(g)g.words.push(w);else groups.push({p,words:[w],v:F.I[i]});});
+  const used=[{x:W/2+2,y:H/2+4,w:14,h:13},...groups.map(g=>({x:g.p[0]-7,y:g.p[1]-7,w:14,h:14}))];
+  for(const g of groups){
+    const selected=g.words.includes(state.word),label=g.words.join(' · '),width=label.length*9;
+    let tx=g.p[0],ty=g.p[1]-17;
+    const candidates=[[0,-18],[0,25],[width/2+12,0],[-width/2-12,0]];for(let r=42;r<=160;r+=24)for(let a=0;a<12;a++)candidates.push([r*Math.cos(a*Math.PI/6),r*Math.sin(a*Math.PI/6)]);
+    for(const [dx,dy] of candidates){
+      const x=Math.max(width/2+8,Math.min(W-width/2-8,g.p[0]+dx)),y=Math.max(20,Math.min(H-10,g.p[1]+dy));
+      const rect={x:x-width/2,y:y-13,w:width,h:21};
+      if(!used.some(r=>rect.x<r.x+r.w+5&&rect.x+rect.w+5>r.x&&rect.y<r.y+r.h+3&&rect.y+rect.h+3>r.y)){tx=x;ty=y;break;}
+    }
+    used.push({x:tx-width/2,y:ty-13,w:width,h:21});
+    if(Math.hypot(tx-g.p[0],ty-g.p[1])>32)s+=`<line x1="${g.p[0]}" y1="${g.p[1]}" x2="${tx}" y2="${ty+4}" stroke="var(--line)"/>`;
+    if(origin&&selected)s+=`<line x1="${W/2}" y1="${H/2}" x2="${g.p[0]}" y2="${g.p[1]}" stroke="var(--brand)" stroke-width="2"/>`;
+    s+=`<g class="${selected?'selected':''}" role="button" tabindex="0" data-words="${g.words.join(',')}" aria-label="Selecionar ${g.words.join(', ')}"><circle cx="${g.p[0]}" cy="${g.p[1]}" r="16" fill="transparent"/><circle class="point" cx="${g.p[0]}" cy="${g.p[1]}" r="${selected?7:5}"/><text text-anchor="middle" x="${tx}" y="${ty}">${label}</text></g>`;
+  }
+  const svg=svgNode(`<svg class="plot" viewBox="0 0 ${W} ${H}" role="group" aria-label="Vetores das palavras no plano">${s}</svg>`);
+  svg.querySelectorAll('[data-words]').forEach(el=>{const pick=()=>{stop();const ws=el.dataset.words.split(',');state.word=ws[(ws.indexOf(state.word)+1)%ws.length];render();};el.onclick=pick;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick();}};});return svg;
+}
+function network(F,ex,phase=2){
+  const W=940,H=310,left=160,mid=410,right=665,row=46,top=42,cy=top+(VOC.length-1)*row/2;
+  const hv=[0,1].map(d=>ex.inputs.reduce((s,i)=>s+F.I[i][d],0)/ex.inputs.length),p=predict(F,hv),cb=ex.inputs.length>1;
+  let s=`<text class="head" x="${left}" y="17">${cb?'entradas':'one-hot: seleciona a palavra'}</text><text class="head" x="${mid}" y="17">${cb?'média dos vetores':'vetor de entrada'}</text><text class="head" x="${right+90}" y="17">probabilidades</text>`;
+  if(phase>=1)VOC.forEach((w,i)=>{const y=top+i*row,on=ex.inputs.includes(i);for(let d=0;d<2;d++)s+=`<line class="edge ${on?'active':''}" x1="${left+13}" y1="${y}" x2="${mid-29}" y2="${cy+(d?35:-35)}"/>`;});
+  if(phase>=2)for(let j=0;j<VOC.length;j++)for(let d=0;d<2;d++)s+=`<line class="edge" x1="${mid+29}" y1="${cy+(d?35:-35)}" x2="${right-10}" y2="${top+j*row}"/>`;
+  VOC.forEach((w,i)=>{const y=top+i*row,on=ex.inputs.includes(i);s+=`<text x="${left-24}" y="${y+5}" text-anchor="end">${w}</text><circle class="node ${on?'active':''}" cx="${left}" cy="${y}" r="12"/><text x="${left}" y="${y+5}" text-anchor="middle">${on?1:0}</text>`;});
+  if(cb&&phase===0)ex.inputs.forEach(i=>{const y=top+i*row;s+=`<text x="${left+28}" y="${y+5}">(${n2(F.I[i][0])}; ${n2(F.I[i][1])})</text>`;});
+  if(phase>=1)[0,1].forEach(d=>{const y=cy+(d?35:-35);s+=`<rect class="mean" x="${mid-34}" y="${y-20}" width="68" height="40" rx="9"/><text text-anchor="middle" x="${mid}" y="${y+5}">${n2(hv[d])}</text>`;});
+  if(phase>=2)VOC.forEach((w,j)=>{const y=top+j*row,on=j===ex.answer;s+=`<g class="${on?'correct':''}"><text x="${right-12}" y="${y+5}" text-anchor="end">${w}</text><rect class="bar" x="${right}" y="${y-7}" width="160" height="14" rx="7"/><rect class="fill" x="${right}" y="${y-7}" width="${Math.max(.5,p[j]*160)}" height="14" rx="7"/><text x="${right+180}" y="${y+5}">${n2(p[j])}</text>${on?`<path d="M${right+240} ${y-6}v12" stroke="var(--act)" stroke-width="3"/>`:''}</g>`;});
+  if(phase>=1 && !cb){
+    const i=ex.inputs[0], yi=top+i*row;
+    [0,1].forEach(d=>{
+      const ym=cy+(d?35:-35),x=left+(mid-left)*.48,y=yi+(ym-yi)*.48;
+      s+=`<g class="weight input-weight"><rect x="${x-30}" y="${y-13}" width="60" height="26" rx="6"/><text text-anchor="middle" x="${x}" y="${y+5}">${n2(F.I[i][d])}</text></g>`;
+    });
+  }
+  if(phase>=2){
+    const yo=top+ex.answer*row;
+    [0,1].forEach(d=>{
+      const ym=cy+(d?35:-35),x=mid+(right-mid)*.52,y=ym+(yo-ym)*.52;
+      s+=`<g class="weight output-weight"><rect x="${x-30}" y="${y-13}" width="60" height="26" rx="6"/><text text-anchor="middle" x="${x}" y="${y+5}">${n2(F.O[ex.answer][d])}</text></g>`;
+    });
+  }
+  if(phase>=1)s+=`<text class="head" x="280" y="${H-7}">W_in · pesos de entrada</text>`;
+  if(phase>=2)s+=`<text class="head" x="535" y="${H-7}">W_out · pesos de saída</text>`;
+  return svgNode(`<svg class="network" viewBox="0 0 ${W} ${H}" role="img" aria-label="Entrada, vetor intermediário e probabilidades de saída; contexto observado ${VOC[ex.answer]}">${s}</svg>`);
+}
+function task(ex,cb=false){const outro=cb?[]:outrosContextos(ex);return h('div',{class:'task'},h('span',{class:'lbl'},cb?'contexto':'entrada'),h('strong',{},cb?ex.inputs.map(i=>VOC[i]).join(' + '):VOC[ex.inputs[0]]),h('span',{class:'arrow'},'→'),h('span',{class:'lbl'},cb?'palavra do centro':'contexto'),h('strong',{},VOC[ex.answer]),outro.map(j=>h('span',{class:'outro-par'},`outro par: ${VOC[ex.inputs[0]]} → ${TOKENS[ex.f][j]}`)));}
+function timeline(kind){
+  const M=model(kind),N=M.ex.length,key=kind==='sg'?'sgTick':'cbTick',total=N*EPOCHS;
+  const move=n=>{stop();state[key]=Math.max(0,Math.min(total,n));state.correctionPhase=0;if(kind==='sg')state.modoPasso=true;if(kind==='cb')state.cbPhase=2;render();};
+  const play=()=>{
+    if(timer){stop();render();return;}
+    if(kind==='cb')state.cbPhase=2;else state.modoPasso=false;
+    if(state[key]>=total)state[key]=0;
+    // Here one playback frame is explicitly one complete epoch. The correction scene handles individual examples.
+    timer=setInterval(()=>{state[key]=Math.min(total,state[key]+N);if(state[key]>=total)stop();render();},reduce?500:350);
+    render();
+  };
+  const inp=h('input',{type:'range',min:0,max:total,value:state[key],'aria-label':'Instante do treinamento',oninput:e=>{stop();state[key]=+e.target.value;state.correctionPhase=0;if(kind==='sg')state.modoPasso=false;if(kind==='cb')state.cbPhase=2;paintTraining(kind);}});
+  return h('div',{class:'timeline'},button(icon(timer?'pausa':'play'),play,'btn quad',{'aria-label':timer?'Pausar treino':'Reproduzir épocas'}),button(icon('esq'),()=>move(state[key]-1),'btn ghost quad',{'aria-label':'Voltar uma atualização',disabled:state[key]===0}),button(icon('dir'),()=>move(state[key]+1),'btn ghost quad',{'aria-label':'Avançar uma atualização',disabled:state[key]===total}),inp,h('span',{class:'clock'},clockText(kind)));
+}
+function clockText(kind){const n=model(kind).ex.length,t=kind==='sg'?state.sgTick:state.cbTick;return `época ${Math.floor(t/n)} · passo ${t%n}/${n}`;}
+function currentExample(){const M=model();return M.ex[(state.sgTick?state.sgTick-1:0)%M.ex.length];}
+function trainingParts(){
+  const M=model(),F=frame('sg',state.sgTick);
+  return stationId()==='treino'?[plot(F,M,true),coords(F)]:[network(F,currentExample()),h('p',{class:'caption'},'W_in guarda o vetor de entrada. W_out calcula as pontuações das saídas.')];
+}
+function topoTreino(){
+  const N=model().ex.length,t=state.sgTick;
+  if(stationId()==='treino'&&(!state.modoPasso||t===0))return [h('div',{class:'frases-epoca'},TOKENS.map((_,f)=>phrase(f,-1,[]))),h('div',{class:'task'},h('span',{class:'lbl'},t===0?'nenhum par aplicado ainda':`${t%N||N} de ${N} pares aplicados nesta época`))];
+  const ex=currentExample();return [phrasePar(ex),task(ex)];
+}
+function legendaTreino(){
+  const N=model().ex.length,comum=`Reproduzir aplica os ${N} pares a cada quadro; as setas aplicam um par por vez.`,ultimo=state.modoPasso&&state.sgTick>0;
+  if(stationId()==='rede')return (ultimo?'A rede mostra o último par aplicado. ':'A rede mostra este par com os pesos deste instante. ')+comum;
+  return (ultimo?'O par acima é o último aplicado. ':'')+comum;
+}
+function paintTraining(kind){
+  const root=$('#station'),M=model(kind),tick=kind==='sg'?state.sgTick:state.cbTick,F=frame(kind,tick);
+  if(stationId()==='cbow')root.querySelector('.scene').replaceChildren(network(F,M.ex[state.cbExample],state.cbPhase));
+  else {root.querySelector('.par-topo').replaceChildren(...topoTreino());root.querySelector('.scene').replaceChildren(...trainingParts());root.querySelector('.legenda-treino').textContent=legendaTreino();}
+  root.querySelector('.clock').textContent=clockText(kind);
+  root.querySelector('[aria-label="Voltar uma atualização"]').disabled=tick===0;
+  root.querySelector('[aria-label="Avançar uma atualização"]').disabled=tick===M.ex.length*EPOCHS;
+  const play=root.querySelector('.timeline button');play.replaceChildren(icon('play'));play.setAttribute('aria-label','Reproduzir épocas');
+}
+function numbersScene(){
+  const dimensions=state.dimensions;
+  const words=h('div',{class:'number-sentence'},TOKENS[state.phrase].map(w=>button([h('strong',{},w),h('span',{class:'components'},state.values[IX[w]].slice(0,dimensions).map(v=>h('span',{},n2(v))))],()=>{state.word=w;render();},'number-word'+(state.word===w?' selected':''),{'aria-pressed':String(state.word===w)})));
+  const edit=h('div',{class:'controls number-editor'},h('strong',{},state.word),Array.from({length:dimensions},(_,d)=>h('label',{},h('span',{class:'lbl'},`número ${d+1}`),h('input',{type:'number',min:-1,max:1,step:.01,value:state.values[IX[state.word]][d].toFixed(2),'aria-label':`Número ${d+1} de ${state.word}`,onchange:e=>{const v=e.target.valueAsNumber;if(!Number.isFinite(v)){render();return;}state.values[IX[state.word]][d]=Math.max(-1,Math.min(1,v));resetTraining();render();}}))));
+  return [h('section',{class:'scene context-scene numbers-scene'},words,edit),h('div',{class:'controls'},h('span',{class:'lbl'},'Números por palavra'),[1,2,3].map(d=>button(`${d}D`,()=>{state.dimensions=d;render();},'opc',{'aria-pressed':String(dimensions===d)})),button('Sortear números',reshuffle,'btn'))];
+}
+function examplesScene(){
+  const pares=examples(1,'sg').filter(x=>x.f===0&&TOKENS[0][x.i]==='café'),ex=pares[state.parE4];
+  const escolhe=k=>{state.parE4=k;render();$('.sentence .token.context')?.focus();};
+  const frase=h('div',{class:'sentence'},TOKENS[0].map((w,i)=>{
+    const k=pares.findIndex(x=>x.js[0]===i);
+    if(k<0)return h('span',{class:'token'+(i===ex.i?' target':'')},w);
+    return h('button',{type:'button',class:'token '+(k===state.parE4?'context':'outro-contexto'),'aria-pressed':String(k===state.parE4),onclick:()=>escolhe(k)},w);
+  }));
+  return [h('section',{class:'scene examples-scene'},frase,
+      h('div',{class:'legend'},h('span',{},h('i',{class:'swatch'}),'entrada'),h('span',{},h('i',{class:'swatch ctx'}),'contexto deste par'),h('span',{},h('i',{class:'swatch outro'}),'outro contexto')),
+      h('div',{class:'par-grande','aria-live':'polite'},h('div',{},h('span',{class:'lbl'},'entrada'),h('strong',{},VOC[ex.inputs[0]])),h('span',{class:'arrow'},'→'),h('div',{},h('span',{class:'lbl'},'contexto'),h('strong',{},VOC[ex.answer])))),
+    h('p',{class:'caption'},'Cada par é uma tarefa: recebendo a entrada, a rede precisa prever o contexto. Clique no outro contexto para ver o outro par.'),
+    h('p',{class:'caption'},`Contando as três frases, são ${examples(1,'sg').length} pares.`)];
+}
+const n3=n=>(n<=-.0005?'−':'')+Math.abs(n).toFixed(3).replace('.',',');
+const par3=n=>n<=-.0005?`(${n3(n)})`:n3(n);
+function correctionScene(){
+  const M=model(),N=M.ex.length,total=N*EPOCHS,tick=state.sgTick;
+  if(tick>=total)return [h('section',{class:'scene context-scene'},coords(frame('sg',total)),h('span',{class:'lbl'},'300 épocas concluídas')),h('div',{class:'controls'},button('Recomeçar pelo primeiro par',()=>{state.sgTick=0;state.correctionPhase=0;state.linha=null;state.modoPasso=false;render();},'btn'))];
+  const ex=M.ex[tick%N],before=frame('sg',tick),after=frame('sg',tick+1),feito=state.correctionPhase===1,i=ex.inputs[0],j=ex.answer,e=VOC[i],c=VOC[j],V=VOC.length;
+  const v0=before.I[i],v1=after.I[i],s0=before.O.map(r=>dot(r,v0)),P0=softmax(s0),s1=after.O.map(r=>dot(r,v1)),P1=softmax(s1);
+  /* depois de corrigir, a tabela inteira mostra o estado novo; só P e a W_in da entrada mostram também o anterior */
+  const O=feito?after.O:before.O,v=feito?v1:v0,S=feito?s1:s0,Pr=feito?P1:P0,somaExp=S.reduce((a,x)=>a+Math.exp(x),0);
+  const sel=state.linha??j,w=VOC[sel];
+  const ad=(a,b)=>feito?[h('small',{},n3(a)),' → ',h('b',{},n3(b))]:n3(a);
+  const cel=x=>h('td',{class:feito?'mudou':null},n3(x));
+  const pick=k=>{state.linha=k;render();$('.row-btn[aria-pressed="true"]')?.focus();};
+  const linhas=VOC.map((u,k)=>h('tr',{class:(k===j?'ctx ':'')+(k===sel?'sel':''),onclick:()=>pick(k)},
+    h('th',{scope:'row'},h('button',{type:'button',class:'row-btn','aria-pressed':String(k===sel),onclick:ev=>{ev.stopPropagation();pick(k);}},u)),
+    cel(O[k][0]),cel(O[k][1]),cel(S[k]),
+    h('td',{},h('span',{class:'mini'},h('i',{style:`width:${100*Pr[k]}%`})),ad(P0[k],P1[k])),
+    h('td',{},k===j?'1':'0')));
+  const tabela=h('div',{class:'tabela-wrap'},h('table',{class:'calc'},h('thead',{},h('tr',{},['saída','W_out x','W_out y','pontuação','P','queremos'].map(t=>h('th',{scope:'col'},t)))),h('tbody',{},linhas)));
+  const conta=h('div',{},`pontuação de ${w} = ${par3(v[0])} × ${par3(O[sel][0])} + ${par3(v[1])} × ${par3(O[sel][1])} = ${n3(S[sel])}  ·  P = e`,h('sup',{},n3(S[sel])),` ÷ ${n3(somaExp)} = ${n3(Pr[sel])}`);
+  const contextos=new Set(M.ex.filter(x=>x.inputs[0]===i).map(x=>x.answer)).size;
+  const voltar=()=>{state.modoPasso=true;if(feito)state.correctionPhase=0;else{state.sgTick=tick-1;state.correctionPhase=1;state.linha=null;}render();};
+  const avancar=()=>{state.modoPasso=true;if(feito){state.sgTick=tick+1;state.correctionPhase=0;state.linha=null;}else state.correctionPhase=1;state.word=e;render();$('#passo-acao')?.focus();};
+  return [phrasePar(ex),task(ex),h('section',{class:'scene conta-scene'},
+      h('div',{class:'vetor'},h('span',{class:'rot'},`W_in de ${e}`),[0,1].map(d=>h('span',{class:'weight-value'},h('small',{},'xy'[d]+'  '),ad(v0[d],v1[d])))),
+      tabela,h('div',{class:'conta'},conta)),
+    h('div',{class:'controls'},button(feito?'Desfazer':'Par anterior',voltar,'btn ghost',{disabled:!feito&&tick===0}),button(feito?'Próximo par':'Corrigir',avancar,'btn',{id:'passo-acao'}),h('span',{class:'lbl'},`par ${tick%N+1} de ${N} · época ${Math.floor(tick/N)+1} de ${EPOCHS}`)),
+    h('div',{class:'legendas'},feito?[h('p',{class:'caption'},`P(${c} | ${e}) foi de ${n3(P0[j])} para ${n3(P1[j])}. Mudaram as ${V} linhas da W_out, em destaque, e, na W_in, só a linha de ${e}.`),h('p',{class:'caption'},contextos>1?`${e} tem ${contextos} contextos diferentes: os outros pedem outras respostas, e P(${c} | ${e}) não chega a 1.`:`${e} só tem esse contexto: P(${c} | ${e}) pode chegar perto de 1.`)]:h('p',{class:'caption'},'Previsão com os pesos atuais. Clique numa linha para ver a conta dela.'))];
+}
+function render(){
+  const st=STATIONS[current],id=st.id,root=$('#station');
+  $('#titulo').textContent='Como o contexto vira vetor';document.title=st.title+' · word2vec';
+  $('#rail').replaceChildren(...STATIONS.map((s,i)=>button(String(i+1),()=>go(i),'rb'+(i===current?' cur':''),{'aria-label':s.title,'aria-current':i===current?'step':null,title:s.title})));
+  const kids=[h('div',{class:'st-head'},h('span',{class:'st-ic'},icon(st.ic)),h('h2',{},st.title))];
+  if(id==='contexto'){
+    const neighbors=TOKENS_LONGOS[state.phrase].map((_,j)=>j).filter(j=>j!==state.target&&Math.abs(j-state.target)<=state.radius);
+    kids.push(h('section',{class:'scene context-scene'},phrase(state.phrase,state.target,neighbors,true,TOKENS_LONGOS),h('div',{class:'legend'},h('span',{},h('i',{class:'swatch'}),'entrada'),h('span',{},h('i',{class:'swatch ctx'}),'contexto'))),h('div',{class:'controls'},h('span',{class:'lbl'},'Janela'),[1,2,3].map(r=>button(String(r),()=>{state.radius=r;render();},'opc',{'aria-pressed':String(state.radius===r)}))),h('div',{class:'controls'},['café','chá','xurupa'].map((w,f)=>button(w,()=>{state.phrase=f;state.target=4;render();},'opc',{'aria-label':'Frase com '+w,'aria-pressed':String(state.phrase===f)}))),h('p',{class:'caption'},'Daqui em diante, o treino usa frases mais curtas e janela 1: '+FRASES.join(' · ')+'.'));
+  }else if(id==='numeros')kids.push(...numbersScene());
+  else if(id==='posicoes'){
+    const M=model(),F=M.frames[0];kids.push(h('section',{class:'scene'},plot(F,M),coords(F)),h('div',{class:'controls'},button([icon('recomecar'),'Sortear posições'],reshuffle,'btn')),h('p',{class:'caption'},'Primeiro número: x. Segundo número: y.'));
+  }else if(id==='exemplos')kids.push(...examplesScene());
+  else if(id==='corrigir')kids.push(...correctionScene());
+  else if(id==='treino'||id==='rede'){
+    kids.push(h('div',{class:'par-topo'},topoTreino()),h('section',{class:'scene'},...trainingParts()),timeline('sg'),h('p',{class:'caption legenda-treino'},legendaTreino()));
+  }else if(id==='embedding'){
+    const M=model(),F=frame('sg',state.sgTick);
+    kids.push(h('div',{class:'word-picker'},VOC.map(w=>button(w,()=>{state.word=w;render();},'opc',{'aria-pressed':String(state.word===w)}))),h('section',{class:'scene'},plot(F,M,false,true),coords(F)),h('p',{class:'caption'},`Linha de ${state.word} na W_in · ${clockText('sg')}`),h('div',{class:'controls'},button('Concluir o treino',()=>{state.sgTick=M.ex.length*EPOCHS;state.correctionPhase=0;state.modoPasso=false;render();},'btn', {disabled:state.sgTick===M.ex.length*EPOCHS})));
+  }else{
+    const cb=id==='cbow',kind=cb?'cb':'sg',M=model(kind),key=cb?'cbExample':'sgExample',ex=M.ex[state[key]],F=frame(kind,cb?state.cbTick:state.sgTick);
+    kids.push(phrasePar(ex),task(ex,cb),h('section',{class:'scene'},network(F,ex,cb?state.cbPhase:2)),h('div',{class:'controls'},button(icon('esq'),()=>{stop();state[key]=Math.max(0,state[key]-1);if(cb)state.cbPhase=0;render();},'btn ghost quad',{'aria-label':cb?'Exemplo anterior':'Par anterior',disabled:state[key]===0}),button(cb?'Outro exemplo':'Outro par',()=>{stop();state[key]=(state[key]+1)%M.ex.length;if(cb)state.cbPhase=0;render();},'btn ghost'),cb?button(state.cbPhase===0?'Calcular a média':state.cbPhase===1?'Prever o centro':'Ver entradas',()=>{state.cbPhase=(state.cbPhase+1)%3;render();},'btn'):null),cb?timeline('cb'):h('p',{class:'caption'},'Uma palavra de entrada e um contexto por par.'));
+  }
+  const nextTitle=id==='numeros'&&state.dimensions!==2?'Usar 2 números no plano':null;
+  kids.push(h('nav',{class:'nav','aria-label':'Navegação das estações'},button(icon('esq'),()=>go(current-1),'btn ghost',{'aria-label':'Estação anterior',disabled:current===0}),h('span',{class:'count'},`${current+1} / ${STATIONS.length}`),current<STATIONS.length-1?button([h('span',{},nextTitle||'Próxima'),nextTitle?null:h('span',{class:'next-label'},STATIONS[current+1].title),icon('dir')],()=>{if(id==='numeros')state.dimensions=2;go(current+1);},'btn'):button('Voltar ao contexto',()=>go(0),'btn ghost')));
+  root.replaceChildren(...kids);
+}
+function commitCorrection(){if(stationId()==='corrigir'&&state.correctionPhase===1){state.sgTick=Math.min(model().ex.length*EPOCHS,state.sgTick+1);state.correctionPhase=0;state.linha=null;state.modoPasso=true;}}
+function go(i){stop();commitCorrection();current=Math.max(0,Math.min(STATIONS.length-1,i));if(stationId()==='numeros'&&!TOKENS[state.phrase].includes(state.word))state.word=TOKENS[state.phrase][2];history.replaceState(null,'','#'+STATIONS[current].id);render();window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});}
+$('#reset').onclick=()=>{stop();Object.assign(state,defaults());models={};current=0;go(0);};
+const initialStation=STATIONS.findIndex(s=>s.id===location.hash.slice(1));current=Math.max(0,initialStation);render();
+</script></body></html>
