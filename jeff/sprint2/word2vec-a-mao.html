@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word2vec à mão</title>
+<style>
+/* Atividade guiada para imprimir ou preencher na tela, em quatro momentos (uma página A4 retrato cada).
+   A versão do aluno sai de ../../../_atividades/versao_aluno.py. */
+:root{--ink:#1f2023;--muted:#6b6f76;--line:#bfc1c7;--soft:#f3f3f5;--brand:#e98a00;--ans:#d11a1a;--paper:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:#e9e9ed;color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:10px 16px;background:var(--paper);border-bottom:1px solid var(--line);font-size:14px}
+button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:5px 12px;cursor:pointer;color:var(--ink)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.bar .dica{color:var(--muted);font-size:13px;max-width:70ch}
+.page{width:210mm;max-width:calc(100% - 24px);min-height:297mm;margin:16px auto;background:var(--paper);padding:9mm 13mm;box-shadow:0 2px 14px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:2.6mm;position:relative}
+.page>.mostra{position:absolute;top:8px;right:10px}
+.page>.mostra button{font-size:12px;padding:3px 9px}
+@page{size:A4 portrait;margin:0}
+@media print{body{background:none}.bar,.mostra{display:none!important}.page{margin:0;box-shadow:none;max-width:none;height:297mm;min-height:0;overflow:hidden;break-after:page}.page:last-child{break-after:auto}}
+.cab{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:3mm}
+.cab .sub{font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.cab .grupo{font-size:13px;white-space:nowrap}.cab .grupo span{display:inline-block;border-bottom:1px solid var(--ink);width:38mm;height:15px}
+h1{margin:2px 0 0;font-size:24px;font-weight:900;letter-spacing:-.01em}
+h2{margin:0;font-size:16px;font-weight:800;display:flex;gap:8px;align-items:center}
+h2 .n{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:13px;flex:none}
+p{margin:0}
+.exemplo{border:2px solid var(--ink);border-radius:12px;padding:2mm 4mm;display:grid;gap:1mm;background:#fcfcfc}
+.exemplo .tag{display:inline-block;background:var(--ink);color:var(--paper);border-radius:6px;padding:1px 8px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--line);padding:2px 4px;height:7.2mm;text-align:center;font-size:14px}
+th{background:var(--soft);font-size:12px;font-weight:700;height:auto;padding:4px 3px}
+td.dado{background:#fafafa;font-weight:600}
+td.eco{background:#fafafa;color:var(--muted);font-weight:600}
+th.esq,td.esq{text-align:left}
+th.esq{white-space:nowrap}
+.ans{color:var(--ans);font-weight:800;font-family:"Comic Sans MS","Segoe Print","Bradley Hand",cursive}
+.page:not(.resp) .ans{visibility:hidden}
+.caixa{display:inline-grid;place-items:center;min-width:18mm;height:8.5mm;border:1.5px solid var(--ink);border-radius:6px;padding:0 5px;vertical-align:middle;margin:0 3px}
+.linhas{display:grid;gap:7mm;padding-top:3mm}.linhas i{display:block;border-bottom:1px solid var(--line)}
+.destaque{border-left:5px solid var(--brand);background:var(--soft);border-radius:0 10px 10px 0;padding:2mm 4mm}
+.nome{border:2px solid var(--ink);border-radius:12px;padding:2mm 4mm;display:grid;gap:1mm}
+.nota{font-size:12px;color:var(--muted)}
+.duas{display:grid;grid-template-columns:1fr 1fr;gap:6mm;align-items:start}
+.formula{font-size:15px;text-align:center}
+.frases{display:flex;justify-content:center;gap:10mm;font:600 15px ui-monospace,Menlo,Consolas,monospace;flex-wrap:wrap}
+sup{font-size:.72em;line-height:0}
+.comp th,.comp td{height:5.2mm;padding:1px 4px;font-size:13px}
+.comp2 th,.comp2 td{height:6.4mm;padding:1px 4px;font-size:13px}
+.rot{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:1mm}
+@media screen and (max-width:640px){.duas{grid-template-columns:1fr}.page{padding:8mm 6mm}}
+.prof{display:none}
+body.prof-on .prof{display:flex}
+.prof ul{margin:0;padding-left:20px;display:grid;gap:3px}
+</style>
+<style>
+/* Versão do aluno, preenchida na tela (computador ou celular) e baixada em PDF. Embutida por
+   versao_aluno.py depois dos estilos da própria atividade. */
+.bar .estado{color:var(--muted);font-size:13px;flex-basis:100%;text-align:center}
+.bar .estado:empty{display:none}
+.bar .pdf{font-size:15px;padding:7px 18px;background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.campo{font:inherit;font-size:16px;font-weight:700;color:var(--ink);background:#fffbea;border:1px solid var(--line);border-radius:6px;padding:2px 4px;text-align:center;width:100%;min-width:2.4em}
+.campo:focus{outline:2px solid var(--brand);outline-offset:0;background:#fff}
+.campo.falta{outline:3px solid var(--ans);outline-offset:1px}
+.caixa:has(.campo){place-items:stretch;padding:0}
+.caixa .campo{border:0;border-radius:5px;height:100%}
+td:has(>.campo){padding:2px}
+td .campo{height:100%;min-height:30px;min-width:2.4em}
+textarea.campo{text-align:left;font-weight:500;line-height:1.45;padding:6px 8px;resize:vertical;min-height:4.4em;display:block}
+.linhas:has(textarea){gap:2mm;padding-top:2mm}
+.cab .grupo{display:flex;align-items:center;gap:6px}
+.cab .grupo .campo{width:42mm;text-align:left}
+.cab .grupo span{width:auto;min-width:38mm;padding:0 4px;font-weight:700;border-bottom:1px solid var(--ink)}
+.rola{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.impresso{display:none}
+@media screen and (max-width:640px){
+  .page{min-height:0}
+  .bar{gap:6px;padding:8px}
+  .rola table{min-width:560px}
+  .caixa{min-width:20mm}
+}
+@media print{
+  .page{height:auto!important;min-height:0!important;overflow:visible!important}
+  .rola{overflow:visible}
+  .campo{background:none!important;border-color:transparent!important;font-size:13px}
+  input.campo{display:none!important}
+  .impresso{display:inline;font-weight:700;font-size:13px;white-space:normal;overflow-wrap:anywhere}
+  .caixa:has(.campo){height:auto;min-height:7mm;place-items:center;padding:1px 5px}
+  td .campo{min-height:0}
+  .cab .grupo .campo{border-bottom:1px solid var(--ink)!important;border-radius:0}
+  textarea.campo{resize:none;border:0;padding:0;min-height:2.6em;line-height:1.3;font-size:12.5px}
+  .page{gap:2.4mm;padding-top:8mm;padding-bottom:6mm}
+  .linhas:has(textarea){padding-top:0}
+  /* atividades com registro (a ponderada) são mais densas: um corpo menor para cada página caber numa folha */
+  body[data-registro] .page{font-size:12.5px;gap:2mm;padding:7mm 12mm 5mm}
+  body[data-registro] th,body[data-registro] td{font-size:12px;height:auto;padding:1px 3px}
+  body[data-registro] h1{font-size:21px}
+  body[data-registro] h2{font-size:14.5px}
+  body[data-registro] .caixa:has(.campo){min-height:6mm}
+}
+</style>
+</head>
+<body>
+<div class="bar">
+</div>
+
+<!-- 1 · PARES -->
+<section class="page" id="p1">
+  <div class="cab"><div><div class="sub">EC08 · encontro 2 · word2vec à mão · 1 de 4</div><h1>Que pares saem das frases?</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>O word2vec aprende a partir de frases como estas. “xurupa” é uma palavra inventada: ninguém sabe o que é, mas ela aparece no mesmo lugar que café e chá.</p>
+  <div class="frases"><span>bebi café quente</span><span>bebi chá quente</span><span>bebi xurupa quente</span></div>
+  <p>Com <b>janela 1</b>, o contexto de uma palavra é a palavra logo antes e a palavra logo depois dela. Cada palavra de contexto vira um <b>par</b>: <b>entrada → contexto</b>. Cada par é uma tarefa para a rede: recebendo a entrada, prever o contexto.</p>
+  <div class="exemplo">
+    <div><span class="tag">Exemplo resolvido</span> &nbsp;<b>bebi café quente</b></div>
+    <p>“bebi” só tem “café” ao lado: <b>bebi → café</b>. “café” tem duas palavras ao lado, então gera dois pares: <b>café → bebi</b> e <b>café → quente</b>. “quente” só tem “café” ao lado: <b>quente → café</b>. A frase gera 4 pares.</p>
+  </div>
+  <h2><span class="n">1</span>Sua vez: os pares das outras duas frases</h2>
+  <p>Cada frase gera 4 pares; com as três, são 12.</p>
+  <div id="tab-pares"></div>
+  <h2><span class="n">2</span>Os contextos de cada palavra, nas três frases</h2>
+  <p>Escreva as palavras que aparecem como contexto de cada entrada. A linha de café já está pronta.</p>
+  <div id="tab-conta"></div>
+  <div class="destaque"><b>Que palavras têm exatamente os mesmos contextos? Café e xurupa aparecem juntas em alguma frase?</b><div class="linhas"><i></i><i></i></div></div>
+</section>
+
+<!-- 2 · PREVER -->
+<section class="page" id="p2">
+  <div class="cab"><div><div class="sub">Word2vec à mão · 2 de 4</div><h1>O que a rede prevê?</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>Cada palavra tem uma linha na <b>W_in</b>, usada quando ela é a entrada, e outra na <b>W_out</b>, usada quando ela é uma saída possível. Aqui são números inteiros, para caber no papel.</p>
+  <div class="duas">
+    <div><div class="rot">W_in: pesos de entrada</div><div id="tab-in"></div></div>
+    <div><div class="rot">W_out: pesos de saída</div><div id="tab-out"></div></div>
+  </div>
+  <p>Vamos seguir o par <b>café → quente</b>. A rede recebe café e dá uma pontuação a cada saída. As pontuações viram probabilidades, e o erro as compara com o que queremos: 1 no contexto, 0 nas outras saídas.</p>
+  <div class="nome">
+    <p class="formula">pontuação = W_in x × W_out x + W_in y × W_out y</p>
+    <p class="formula">P = e<sup>pontuação</sup> ÷ soma de e<sup>pontuação</sup> das 5 saídas &nbsp;&nbsp;·&nbsp;&nbsp; erro = P − queremos</p>
+  </div>
+  <div id="tab-exp"></div>
+  <div class="exemplo">
+    <div><span class="tag">Exemplo resolvido</span> &nbsp;<b>Saída bebi, com a W_in de café (1; 2)</b></div>
+    <p>pontuação = 1 × 2 + 2 × (−1) = 0, e e<sup>0</sup> = 1,00. Depois de somar a coluna: P = 1,00 ÷ soma, com duas casas. Bebi não é o contexto deste par: queremos 0, e o erro é P − 0.</p>
+  </div>
+  <h2><span class="n">3</span>Sua vez: as outras saídas</h2>
+  <p>Preencha pontuação e e<sup>pontuação</sup>, some a coluna e só então calcule P, com duas casas (a divisão pode ser na calculadora). <b>Para conferir:</b> a coluna P deve somar 1.</p>
+  <div id="tab-prever"></div>
+  <div class="destaque"><b>Em que saída a rede mais aposta? Isso combina com os contextos da página 1? O que o erro de quente indica?</b><div class="linhas"><i></i><i></i></div></div>
+</section>
+
+<!-- 3 · CORRIGIR -->
+<section class="page" id="p3">
+  <div class="cab"><div><div class="sub">Word2vec à mão · 3 de 4</div><h1>O que uma correção muda?</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>A correção usa os erros da página 2 para mudar os pesos. O 0,1 é a <b>taxa de aprendizado</b>, o tamanho do passo. <b>Todas as contas usam os pesos antigos</b>: nenhum número novo entra nas contas desta página.</p>
+  <div class="nome">
+    <p class="formula">W_out novo = W_out antigo − 0,1 × erro × W_in de café (1; 2)</p>
+    <p class="formula">W_in de café nova = W_in de café − 0,1 × soma da coluna (erro × W_out antigo)</p>
+  </div>
+  <div class="exemplo">
+    <div><span class="tag">Exemplo resolvido</span> &nbsp;<b>Linha de bebi, com W_out antigo (2; −1)</b></div>
+    <p>Erro 0,15. Para a soma: 0,15 × 2 = 0,30 e 0,15 × (−1) = −0,15. W_out novo: 2 − 0,1 × 0,15 × 1 = 1,985 e −1 − 0,1 × 0,15 × 2 = −1,030. Se o seu erro de bebi na página 2 não deu 0,15, volte e confira.</p>
+  </div>
+  <h2><span class="n">4</span>Sua vez: as linhas de café e de quente</h2>
+  <p>Café é a saída em que a rede mais apostou; quente é o contexto. As outras linhas já estão prontas. Depois, <b>some as cinco linhas da coluna x e faça o mesmo na coluna y</b>. <b>Para conferir:</b> as duas somas, juntas, dão <span id="soma-somas"></span>. Os erros em cinza vêm da página 2: no papel, copie-os antes de começar.</p>
+  <div id="tab-corr"></div>
+  <h2><span class="n">5</span>A nova W_in de café</h2>
+  <p>Use as duas somas: W_in de café era (1; 2). Só esta linha da W_in muda neste par.</p>
+  <p>x: <span class="caixa" style="min-width:42mm"><span class="ans" id="r-wx"></span></span> &nbsp; y: <span class="caixa" style="min-width:42mm"><span class="ans" id="r-wy"></span></span></p>
+  <p><b>O que isso fez com a previsão.</b> P depois foi calculado com todos os novos pesos e arredondado.</p>
+  <div id="tab-depois"></div>
+  <div class="destaque"><b>Que pesos mudaram, e quais não? O que aconteceu com P(quente | café)? E com bebi, que também é contexto de café?</b><div class="linhas"><i></i><i></i></div></div>
+</section>
+
+<!-- 4 · DEPOIS DO TREINO -->
+<section class="page" id="p4">
+  <div class="cab"><div><div class="sub">Word2vec à mão · 4 de 4</div><h1>O que sobra depois do treino?</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>A máquina repetiu a correção para os 12 pares, 300 vezes: são 300 <b>épocas</b>. Depois do treino, a linha de cada palavra na W_in é o <b>embedding</b> dela.</p>
+  <div id="tab-epocas"></div>
+  <div class="exemplo">
+    <div><span class="tag">Exemplo resolvido</span> &nbsp;<b>Café × chá: cosseno = (x₁ × x₂ + y₁ × y₂) ÷ (tamanho₁ × tamanho₂)</b></div>
+    <p>Na época 0, todos os vetores têm tamanho √5, então o denominador é 5: (1 × 2 + 2 × (−1)) ÷ 5 = <b>0,00</b>. Na época 300, use a coluna de tamanhos: <span id="ex-cos"></span>.</p>
+  </div>
+  <h2><span class="n">6</span>Sua vez: três cossenos, com duas casas</h2>
+  <div id="tab-cos"></div>
+  <p><b>O que a rede prevê na época 300.</b> Valores arredondados: 0,00 não é exatamente zero, e uma linha pode somar 0,99. Nos cossenos, 0,01 de diferença também é arredondamento.</p>
+  <div id="tab-p300"></div>
+  <div class="destaque"><b>Compare café e xurupa nos contextos da página 1 e nesta tabela. Que tarefa as duas entradas aprenderam a realizar?</b><div class="linhas"><i></i></div></div>
+  <div class="destaque"><b>Café e quente estão sempre lado a lado; café e xurupa nunca estão na mesma frase. O que aconteceu com os cossenos desses dois pares, e como isso se liga à tarefa?</b><div class="linhas"><i></i><i></i></div></div>
+  <div class="nome"><p><b>Hipótese distribucional</b>: palavras com os mesmos contextos acabam com vetores parecidos, mesmo sem aparecer juntas. Assim “xurupa” ganhou um lugar sem que ninguém dissesse o que ela é.</p></div>
+</section>
+
+
+<script>
+(function(){
+"use strict";
+const ALUNO=true;
+/* o corpus e os pesos iniciais (inteiros); os dados do treino vêm de ferramentas/word2vec_a_mao.py */
+const V=["bebi","café","chá","quente","xurupa"];
+const FRASES=[["bebi","café","quente"],["bebi","chá","quente"],["bebi","xurupa","quente"]];
+const WIN=[[1,-2],[1,2],[2,-1],[2,1],[-2,-1]];
+const WOUT=[[2,-1],[3,-1],[0,0],[-2,1],[-2,1]];
+const E={"-1":0.37,"0":1,"1":2.72,"2":7.39};
+const CAFE=1,QUENTE=3;
+const EPOCAS={0:WIN,100:[[0.16,-1.06],[-0.14,1.71],[-0.8,1.03],[0.74,-1.1],[-1.45,0.37]],300:[[0.54,-0.52],[-0.45,1.02],[-0.69,0.81],[0.69,-0.86],[-0.92,0.61]]};
+const P_DEPOIS=[0.06,0.11,0.13,0.43,0.26];
+const P300=[[0.01,0.33,0.32,0.01,0.34],[0.51,0.0,0.0,0.48,0.0],[0.51,0.0,0.0,0.48,0.0],[0.0,0.33,0.32,0.0,0.35],[0.51,0.0,0.0,0.49,0.0]];
+
+const h=(tag,at={},...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(at))if(v!=null)e.setAttribute(k,v);kids.flat(Infinity).forEach(k=>k!=null&&e.append(k instanceof Node?k:document.createTextNode(k)));return e;};
+const $=id=>document.getElementById(id);
+const num=(v,d)=>{const r=Number(v.toFixed(d));return (r<0?"−":"")+Math.abs(r).toFixed(d).replace(".",",");};
+const int=v=>(v<0?"−":"")+Math.abs(v);
+const par1=v=>v<0?`(${num(v,2)})`:num(v,2);
+/* uma resposta: vazia na versão do aluno; o id liga o campo às células em cinza das páginas seguintes */
+const ans=(v,id)=>h("span",{class:"ans","data-id":id||null},ALUNO?"":v);
+const tdA=(v,id)=>h("td",{},ans(v,id));
+const dado=v=>h("td",{class:"dado"},v);
+const eco=(v,id)=>h("td",{class:"eco","data-de":id},ALUNO?"":v);
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1],tam=a=>Math.hypot(a[0],a[1]);
+const expo=()=>["e",h("sup",{},"pontuação")];
+
+/* a cadeia de contas da folha, com P arredondado como o aluno faz */
+const vC=WIN[CAFE];
+const S=WOUT.map(o=>dot(vC,o)),X=S.map(s=>E[String(s)]),SOMA=X.reduce((a,b)=>a+b,0);
+const P=X.map(x=>Number((x/SOMA).toFixed(2)));
+const ERR=P.map((p,k)=>Number((p-(k===QUENTE?1:0)).toFixed(2)));
+const NOVO=WOUT.map((o,k)=>o.map((x,d)=>x-0.1*ERR[k]*vC[d]));
+const PROD=WOUT.map((o,k)=>o.map(x=>ERR[k]*x));
+const SP=[0,1].map(d=>PROD.reduce((a,p)=>a+p[d],0));
+const VN=[0,1].map(d=>vC[d]-0.1*SP[d]);
+
+/* página 1 */
+const PARES=f=>{const t=FRASES[f],L=[];t.forEach((w,i)=>[i-1,i+1].forEach(j=>{if(j>=0&&j<t.length)L.push(`${w} → ${t[j]}`);}));return L;};
+$("tab-pares").append(h("table",{},h("tr",{},h("th",{class:"esq"},"frase"),[1,2,3,4].map(n=>h("th",{},`par ${n}`))),
+  [1,2].map(f=>h("tr",{},h("th",{class:"esq"},FRASES[f].join(" ")),PARES(f).map(p=>tdA(p))))));
+const CTX=V.map(w=>V.filter(c=>FRASES.some(t=>t.some((x,i)=>x===w&&(t[i-1]===c||t[i+1]===c)))).join(", "));
+$("tab-conta").append(h("table",{},h("tr",{},h("th",{class:"esq"},"entrada"),h("th",{},"contextos")),
+  V.map((w,a)=>h("tr",{},h("th",{class:"esq"},w),a===CAFE?dado(CTX[a]):tdA(CTX[a])))));
+
+/* página 2 */
+const tabPesos=W=>h("table",{class:"comp"},h("tr",{},h("th",{class:"esq"},""),h("th",{},"x"),h("th",{},"y")),V.map((w,k)=>h("tr",{},h("th",{class:"esq"},w),dado(int(W[k][0])),dado(int(W[k][1])))));
+$("tab-in").append(tabPesos(WIN));$("tab-out").append(tabPesos(WOUT));
+$("tab-exp").append(h("table",{class:"comp"},h("tr",{},h("th",{class:"esq"},"pontuação"),[-1,0,1,2].map(s=>h("th",{},int(s)))),h("tr",{},h("th",{class:"esq"},expo()),[-1,0,1,2].map(s=>dado(num(E[String(s)],2))))));
+$("tab-prever").append(h("table",{},
+  h("tr",{},h("th",{class:"esq"},"saída"),h("th",{},"pontuação"),h("th",{},expo()),h("th",{},"P"),h("th",{},"queremos"),h("th",{},"erro")),
+  V.map((w,k)=>h("tr",{},h("th",{class:"esq"},w),k===0?dado(int(S[k])):tdA(int(S[k])),k===0?dado(num(X[k],2)):tdA(num(X[k],2)),tdA(num(P[k],2),`p-${k}`),dado(k===QUENTE?"1":"0"),tdA(num(ERR[k],2),`e-${k}`))),
+  h("tr",{},h("th",{class:"esq"},"soma"),h("td",{}),tdA(num(SOMA,2)),h("td",{}),h("td",{}),h("td",{}))));
+
+/* página 3 */
+const FEITAS=[CAFE,QUENTE];
+const celC=(k,v,d)=>FEITAS.includes(k)?tdA(num(v,d)):dado(num(v,d));
+$("soma-somas").textContent=num(SP[0]+SP[1],2);
+$("tab-corr").append(h("table",{},
+  h("tr",{},h("th",{class:"esq"},"saída"),h("th",{},"erro"),h("th",{},"W_out antigo x"),h("th",{},"W_out antigo y"),h("th",{},"erro × W_out x"),h("th",{},"erro × W_out y"),h("th",{},"W_out novo x"),h("th",{},"W_out novo y")),
+  V.map((w,k)=>h("tr",{},h("th",{class:"esq"},w),eco(num(ERR[k],2),`e-${k}`),dado(int(WOUT[k][0])),dado(int(WOUT[k][1])),celC(k,PROD[k][0],2),celC(k,PROD[k][1],2),celC(k,NOVO[k][0],3),celC(k,NOVO[k][1],3))),
+  h("tr",{},h("th",{class:"esq",colspan:"4",style:"text-align:right"},"soma de cada coluna"),tdA(num(SP[0],2)),tdA(num(SP[1],2)),h("td",{}),h("td",{}))));
+if(!ALUNO){$("r-wx").textContent=`${int(vC[0])} − 0,1 × ${par1(SP[0])} = ${num(VN[0],3)}`;$("r-wy").textContent=`${int(vC[1])} − 0,1 × ${par1(SP[1])} = ${num(VN[1],3)}`;}
+$("tab-depois").append(h("table",{class:"comp"},h("tr",{},h("th",{class:"esq"},"saída"),V.map(w=>h("th",{},w))),
+  h("tr",{},h("th",{class:"esq"},"P antes"),V.map((w,k)=>eco(num(P[k],2),`p-${k}`))),
+  h("tr",{},h("th",{class:"esq"},"P depois"),V.map((w,k)=>dado(num(P_DEPOIS[k],2))))));
+
+/* página 4 */
+const par=v=>`${num(v[0],2)}; ${num(v[1],2)}`;
+$("tab-epocas").append(h("table",{class:"comp"},
+  h("tr",{},h("th",{class:"esq"},"W_in"),h("th",{},"época 0"),h("th",{},"época 100"),h("th",{},"época 300"),h("th",{},"tamanho na época 300")),
+  V.map((w,k)=>h("tr",{},h("th",{class:"esq"},w),dado(`${int(WIN[k][0])}; ${int(WIN[k][1])}`),dado(par(EPOCAS[100][k])),dado(par(EPOCAS[300][k])),dado(num(tam(EPOCAS[300][k]),2))))));
+const IX=Object.fromEntries(V.map((w,k)=>[w,k]));
+const cosE=(e,a,b)=>{const A=EPOCAS[e][IX[a]],B=EPOCAS[e][IX[b]];return dot(A,B)/(Number(tam(A).toFixed(2))*Number(tam(B).toFixed(2)));};
+const cos0=(a,b)=>dot(WIN[IX[a]],WIN[IX[b]])/5;
+const CP=[["café","chá"],["café","xurupa"],["café","quente"],["bebi","quente"]];
+{const A=EPOCAS[300][IX["café"]],B=EPOCAS[300][IX["chá"]];$("ex-cos").append(`(${par1(A[0])} × ${par1(B[0])} + ${par1(A[1])} × ${par1(B[1])}) ÷ (${num(tam(A),2)} × ${num(tam(B),2)}) = `,h("b",{},num(cosE(300,"café","chá"),2)));}
+const c0=(a,b,k)=>k===1||k===2?tdA(num(cos0(a,b),2)):dado(num(cos0(a,b),2));
+const c3=(a,b,k)=>k===1?tdA(num(cosE(300,a,b),2)):dado(num(cosE(300,a,b),2));
+$("tab-cos").append(h("table",{class:"comp2"},
+  h("tr",{},h("th",{class:"esq"},"cosseno"),h("th",{},"época 0"),h("th",{},"época 100"),h("th",{},"época 300")),
+  CP.map(([a,b],k)=>h("tr",{},h("th",{class:"esq"},`${a} × ${b}`),c0(a,b,k),dado(num(cosE(100,a,b),2)),c3(a,b,k)))));
+$("tab-p300").append(h("table",{class:"comp"},h("tr",{},h("th",{class:"esq"},"entrada ↓ · saída →"),V.map(c=>h("th",{},c))),
+  ["café","xurupa","quente"].map(w=>h("tr",{},h("th",{class:"esq"},w),V.map((c,b)=>dado(num(P300[V.indexOf(w)][b],2)))))));
+
+})();
+</script>
+<script>
+/* Versão do aluno, preenchida na tela (computador ou celular): cada resposta vazia vira um campo, as linhas
+   de texto livre viram uma caixa de texto, as linhas em cinza repetem as respostas das páginas anteriores,
+   tudo fica guardado neste navegador e "Baixar PDF" imprime as páginas com o nome do grupo (ou do aluno, quando
+   o cabeçalho diz "Nome"). Com <body data-registro>, cada campo guarda quando foi preenchido, o tempo de edição e
+   quanto foi digitado ou colado, e o PDF ganha uma última página com esse registro. Embutido por versao_aluno.py
+   depois do script da própria atividade, que já desenhou as páginas. */
+(function(){
+"use strict";
+const h=(tag,at={},...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(at))if(v!=null)e.setAttribute(k,v);kids.flat().forEach(k=>k!=null&&e.append(k instanceof Node?k:document.createTextNode(k)));return e;};
+const TITULO=document.title,STORE="ec08-atividade-"+TITULO.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g,"-");
+
+/* campos */
+const INDIVIDUAL=/^\s*Nome/.test(document.querySelector(".cab .grupo")?.textContent||"");
+const campo=id=>h("input",{class:"campo",type:"text",size:"3",autocomplete:"off",autocapitalize:"off",spellcheck:"false","aria-label":"resposta","data-id":id});
+document.querySelectorAll("span.ans").forEach(s=>s.replaceWith(campo(s.getAttribute("data-id"))));
+document.querySelectorAll(".caixa").forEach(c=>{if(!c.querySelector(".campo"))c.append(campo());});
+document.querySelectorAll(".linhas").forEach(l=>{l.querySelectorAll("i").forEach(i=>i.remove());
+  l.append(h("textarea",{class:"campo",rows:"3","aria-label":INDIVIDUAL?"sua resposta":"resposta do grupo"}));});
+document.querySelectorAll(".page table").forEach(t=>{const r=h("div",{class:"rola"});t.replaceWith(r);r.append(t);});
+const cresce=t=>{t.style.height="auto";t.style.height=t.scrollHeight+2+"px";};
+
+/* o grupo (ou o aluno): um campo no cabeçalho da primeira página, repetido nas outras e em .eco-nome */
+const cabs=[...document.querySelectorAll(".cab .grupo span")];
+const grupo=h("input",{class:"campo",id:"grupo",autocomplete:"off",placeholder:INDIVIDUAL?"seu nome":"nome do grupo","aria-label":INDIVIDUAL?"nome":"grupo"});
+if(cabs[0])cabs[0].replaceWith(grupo);
+const mostraGrupo=()=>[...cabs.slice(1),...document.querySelectorAll(".eco-nome")].forEach(s=>s.textContent=grupo.value.trim());
+
+/* as linhas em cinza seguem os campos de origem */
+const ecos=[...document.querySelectorAll("[data-de]")];
+const atualizaEcos=()=>ecos.forEach(e=>{const c=document.querySelector(`input[data-id="${e.getAttribute("data-de")}"]`);e.textContent=c?c.value.trim():"";});
+
+/* só o botão de baixar o PDF */
+const pdf=h("button",{type:"button",class:"pdf"},"Baixar PDF"),estado=h("p",{class:"estado","aria-live":"polite"});
+document.querySelector(".bar").replaceChildren(pdf,estado);
+
+/* guardado neste navegador; se a atividade mudou (outro número de campos), volta só o que tem data-id */
+const campos=[...document.querySelectorAll(".page .campo")].filter(c=>c!==grupo);
+/* registro por campo: i início, f última edição, a tempo ativo (ms), d caracteres digitados, c colados, nc colagens.
+   O tempo ativo de um campo soma o intervalo desde a edição anterior em qualquer campo, quando ele é menor que PAUSA:
+   assim conta também o tempo de pensar antes de escrever, e uma saída longa não conta. A primeira edição conta
+   desde que a página foi aberta. */
+const REGISTRO=document.body.hasAttribute("data-registro"),PAUSA=180000;
+let reg=campos.map(()=>({i:0,f:0,a:0,d:0,c:0,nc:0})),aberto=Date.now(),ultima=Date.now();
+function salva(){try{localStorage.setItem(STORE,JSON.stringify({n:campos.length,grupo:grupo.value,campos:campos.map(c=>c.value),
+  ids:campos.map(c=>c.dataset.id||""),reg,aberto}));}catch(e){}}
+let guardado=null;try{guardado=JSON.parse(localStorage.getItem(STORE)||"null");}catch(e){}
+if(guardado){grupo.value=guardado.grupo||"";if(guardado.aberto)aberto=guardado.aberto;
+  if(guardado.n===campos.length){campos.forEach((c,j)=>{c.value=guardado.campos[j]||"";});if(guardado.reg&&guardado.reg.length===campos.length)reg=guardado.reg;}
+  else if(guardado.ids)campos.forEach((c,j)=>{const k=c.dataset.id?guardado.ids.indexOf(c.dataset.id):-1;if(k>=0){c.value=guardado.campos[k]||"";if(guardado.reg)reg[j]=guardado.reg[k];}});}
+else if(REGISTRO)salva();
+const antes=new Map(campos.map(c=>[c,c.value.length]));
+function registra(c,tipo){
+  const j=campos.indexOf(c);if(j<0)return;
+  const r=reg[j],agora=Date.now(),delta=c.value.length-(antes.get(c)||0);antes.set(c,c.value.length);
+  if(agora-ultima<PAUSA)r.a+=agora-ultima;
+  if(!r.i)r.i=agora;
+  r.f=ultima=agora;
+  if(delta>0){if(/^insertFrom(Paste|Drop)/.test(tipo||"")){r.c+=delta;r.nc++;}else r.d+=delta;}
+}
+document.addEventListener("input",e=>{if(e.target.tagName==="TEXTAREA")cresce(e.target);if(e.target===grupo){grupo.classList.remove("falta");estado.textContent="";mostraGrupo();}
+  if(REGISTRO)registra(e.target,e.inputType);atualizaEcos();salva();});
+mostraGrupo();atualizaEcos();document.querySelectorAll("textarea").forEach(cresce);
+
+/* a página do registro: montada na hora de imprimir, com o que está guardado */
+const doisDig=n=>String(n).padStart(2,"0");
+const hora=t=>{if(!t)return"";const d=new Date(t);return`${doisDig(d.getDate())}/${doisDig(d.getMonth()+1)} ${doisDig(d.getHours())}:${doisDig(d.getMinutes())}`;};
+const dur=ms=>{const s=Math.round(ms/1000);return`${Math.floor(s/60)} min ${doisDig(s%60)} s`;};
+function paginaRegistro(){
+  document.getElementById("registro")?.remove();
+  const pags=[...document.querySelectorAll(".page")];
+  const onde=c=>{const p=c.closest(".page"),n=pags.indexOf(p)+1,k=[...p.querySelectorAll(`${c.tagName}.campo`)].filter(x=>x!==grupo).indexOf(c)+1;return`pág. ${n} · ${c.tagName==="TEXTAREA"?"texto":"campo"} ${k}`;};
+  /* uma linha por página para os campos curtos, e uma por caixa de texto */
+  const soma=rs=>rs.reduce((s,r)=>({i:r.i&&(!s.i||r.i<s.i)?r.i:s.i,f:Math.max(s.f,r.f),a:s.a+r.a,d:s.d+r.d,c:s.c+r.c,nc:s.nc+r.nc}),{i:0,f:0,a:0,d:0,c:0,nc:0});
+  const linhas=[];
+  pags.forEach((p,k)=>{const js=campos.map((c,j)=>j).filter(j=>campos[j].closest(".page")===p&&(reg[j].i||campos[j].value));
+    const curtos=js.filter(j=>campos[j].tagName!=="TEXTAREA");
+    if(curtos.length)linhas.push([`pág. ${k+1} · ${curtos.length} campos curtos`,soma(curtos.map(j=>reg[j])),curtos.reduce((s,j)=>s+campos[j].value.length,0)]);
+    js.filter(j=>campos[j].tagName==="TEXTAREA").forEach(j=>linhas.push([onde(campos[j]),reg[j],campos[j].value.length]));});
+  const tot=reg.reduce((s,r)=>({a:s.a+r.a,d:s.d+r.d,c:s.c+r.c}),{a:0,d:0,c:0});
+  const ts=reg.filter(r=>r.i);
+  const sec=h("section",{class:"page",id:"registro"},
+    h("div",{class:"cab"},h("div",{},h("div",{class:"sub"},TITULO),h("h1",{},"Registro de preenchimento")),h("div",{class:"grupo"},grupo.value.trim())),
+    h("p",{class:"nota"},`Caderno aberto pela primeira vez neste navegador em ${hora(aberto)}. Primeira resposta: ${hora(Math.min(...ts.map(r=>r.i)))}; última edição: ${hora(Math.max(...ts.map(r=>r.f)))}. `+
+      `Tempo ativo somado: ${dur(tot.a)} (intervalos de até 3 min entre uma edição e a seguinte). Digitados: ${tot.d} caracteres; colados: ${tot.c}. Gerado em ${hora(Date.now())}.`),
+    h("table",{class:"reg"},h("tr",{},["resposta","início","última edição","tempo ativo","digitados","colados (vezes)"].map(t=>h("th",{},t))),
+      linhas.map(([rot,r])=>h("tr",{},h("td",{class:"esq"},rot),h("td",{},hora(r.i)),h("td",{},hora(r.f)),h("td",{},dur(r.a)),h("td",{},String(r.d)),h("td",{},r.c?`${r.c} (${r.nc})`:"0")))),
+    /* os campos com data-id, em base64, para a correção ler do PDF (ferramentas/corrigir.py da ponderada) */
+    h("p",{class:"dados"},"atividade-dados-v1:"+btoa(unescape(encodeURIComponent(JSON.stringify({nome:grupo.value.trim(),
+      campos:Object.fromEntries(campos.filter(c=>c.dataset.id).map(c=>[c.dataset.id,c.value.trim()])),
+      registro:linhas.map(([rot,r,n])=>({onde:rot,n,...r}))}))))+":fim-dados"));
+  document.body.append(sec);
+}
+if(REGISTRO){const st=document.createElement("style");st.textContent=".reg td,.reg th{font-size:11px;height:auto;padding:1px 4px}#registro{min-height:0}#registro .dados{font:7px/1.2 ui-monospace,Menlo,monospace;color:#999;word-break:break-all}@media screen{#registro{display:none}}";document.head.append(st);}
+
+/* PDF: a janela de impressão do navegador, com "Salvar como PDF". No papel, cada campo curto vira texto que
+   quebra linha (um input corta o que não cabe); o registro também é montado no clique, para o caso de o
+   navegador não avisar a impressão. */
+function paraImprimir(){
+  document.querySelectorAll("textarea").forEach(cresce);
+  document.querySelectorAll("input.campo").forEach(c=>{let s=c.nextElementSibling;
+    if(!s||!s.classList.contains("impresso")){s=h("span",{class:"impresso"});c.after(s);}s.textContent=c.value;});
+  if(REGISTRO)paginaRegistro();
+}
+addEventListener("beforeprint",paraImprimir);
+pdf.addEventListener("click",()=>{
+  if(grupo.value.trim().length<2){grupo.classList.add("falta");grupo.focus();estado.textContent=INDIVIDUAL?"Escreva o seu nome antes de baixar.":"Escreva o nome do grupo antes de baixar.";return;}
+  document.title=`${TITULO} - ${grupo.value.trim()}`;estado.textContent="Na janela de impressão, escolha “Salvar como PDF”. No celular, use Compartilhar ou Imprimir e salve em PDF.";
+  paraImprimir();setTimeout(()=>{print();document.title=TITULO;},50);});
+})();
+</script>
+</body>
+</html>

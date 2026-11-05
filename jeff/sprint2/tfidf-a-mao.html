@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TF-IDF à mão</title>
+<style>
+/* Atividade guiada para imprimir ou preencher na tela, em quatro momentos (uma página A4 retrato cada).
+   A versão do aluno sai de ../../../_atividades/versao_aluno.py. */
+:root{--ink:#1f2023;--muted:#6b6f76;--line:#bfc1c7;--soft:#f3f3f5;--brand:#e98a00;--ans:#d11a1a;--paper:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:#e9e9ed;color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:10px 16px;background:var(--paper);border-bottom:1px solid var(--line);font-size:14px}
+button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:5px 12px;cursor:pointer;color:var(--ink)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.bar .dica{color:var(--muted);font-size:13px;max-width:70ch}
+.page{width:210mm;max-width:calc(100% - 24px);min-height:297mm;margin:16px auto;background:var(--paper);padding:10mm 13mm;box-shadow:0 2px 14px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:3.6mm;position:relative}
+.page>.mostra{position:absolute;top:8px;right:10px}
+.page>.mostra button{font-size:12px;padding:3px 9px}
+@page{size:A4 portrait;margin:0}
+@media print{body{background:none}.bar,.mostra{display:none!important}.page{margin:0;box-shadow:none;max-width:none;height:297mm;min-height:0;overflow:hidden;break-after:page}.page:last-child{break-after:auto}}
+.cab{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:3mm}
+.cab .sub{font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.cab .grupo{font-size:13px;white-space:nowrap}.cab .grupo span{display:inline-block;border-bottom:1px solid var(--ink);width:38mm;height:15px}
+h1{margin:2px 0 0;font-size:24px;font-weight:900;letter-spacing:-.01em}
+h2{margin:0;font-size:16px;font-weight:800;display:flex;gap:8px;align-items:center}
+h2 .n{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:13px;flex:none}
+p{margin:0}
+.bloco{display:grid;gap:2.5mm}
+.exemplo{border:2px solid var(--ink);border-radius:12px;padding:4mm 5mm;display:grid;gap:2.5mm;background:#fcfcfc}
+.exemplo .tag{display:inline-block;background:var(--ink);color:var(--paper);border-radius:6px;padding:1px 8px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--line);padding:2px 4px;height:8mm;text-align:center;font-size:14px}
+th{background:var(--soft);font-size:12px;font-weight:700;height:auto;padding:4px 3px}
+td.dado{background:#fafafa;font-weight:600}
+td.eco{background:#fafafa;color:var(--muted);font-weight:600}
+th.esq,td.esq{text-align:left;white-space:nowrap}
+tr.forte td{border-top:2px solid var(--ink)}
+.ans{color:var(--ans);font-weight:800;font-family:"Comic Sans MS","Segoe Print","Bradley Hand",cursive}
+.page:not(.resp) .ans{visibility:hidden}
+.caixa{display:inline-grid;place-items:center;min-width:16mm;height:9mm;border:1.5px solid var(--ink);border-radius:6px;padding:0 5px;vertical-align:middle;margin:0 3px}
+.linhas{display:grid;gap:7mm;padding-top:3mm}.linhas i{display:block;border-bottom:1px solid var(--line)}
+.destaque{border-left:5px solid var(--brand);background:var(--soft);border-radius:0 10px 10px 0;padding:3mm 5mm}
+.nome{border:2px solid var(--ink);border-radius:12px;padding:4mm 5mm;display:grid;gap:2mm}
+.nota{font-size:12px;color:var(--muted)}
+.duas{display:grid;grid-template-columns:1fr 1fr;gap:6mm;align-items:start}
+.corpus td{font-size:15px;height:8.5mm}
+.corpus td.esq{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:15px}
+.formula{font-size:17px;text-align:center;padding:1mm 0}
+@media screen and (max-width:640px){.duas{grid-template-columns:1fr}.page{padding:8mm 6mm}}
+.prof{display:none}
+body.prof-on .prof{display:flex}
+.prof ul{margin:0;padding-left:20px;display:grid;gap:3px}
+</style>
+<style>
+/* Versão do aluno, preenchida na tela (computador ou celular) e baixada em PDF. Embutida por
+   versao_aluno.py depois dos estilos da própria atividade. */
+.bar .estado{color:var(--muted);font-size:13px;flex-basis:100%;text-align:center}
+.bar .estado:empty{display:none}
+.bar .pdf{font-size:15px;padding:7px 18px;background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.campo{font:inherit;font-size:16px;font-weight:700;color:var(--ink);background:#fffbea;border:1px solid var(--line);border-radius:6px;padding:2px 4px;text-align:center;width:100%;min-width:2.4em}
+.campo:focus{outline:2px solid var(--brand);outline-offset:0;background:#fff}
+.campo.falta{outline:3px solid var(--ans);outline-offset:1px}
+.caixa:has(.campo){place-items:stretch;padding:0}
+.caixa .campo{border:0;border-radius:5px;height:100%}
+td:has(>.campo){padding:2px}
+td .campo{height:100%;min-height:30px;min-width:2.4em}
+textarea.campo{text-align:left;font-weight:500;line-height:1.45;padding:6px 8px;resize:vertical;min-height:4.4em;display:block}
+.linhas:has(textarea){gap:2mm;padding-top:2mm}
+.cab .grupo{display:flex;align-items:center;gap:6px}
+.cab .grupo .campo{width:42mm;text-align:left}
+.cab .grupo span{width:auto;min-width:38mm;padding:0 4px;font-weight:700;border-bottom:1px solid var(--ink)}
+.rola{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media screen and (max-width:640px){
+  .page{min-height:0}
+  .bar{gap:6px;padding:8px}
+}
+@media print{
+  .page{height:auto!important;min-height:0!important;overflow:visible!important}
+  .rola{overflow:visible}
+  .campo{background:none!important;border-color:transparent!important;font-size:14px}
+  td .campo{min-height:0}
+  .cab .grupo .campo{border-bottom:1px solid var(--ink)!important;border-radius:0}
+  textarea.campo{resize:none;border:0;padding:0;min-height:0;line-height:1.3}
+  .page{gap:2.4mm;padding-top:8mm;padding-bottom:6mm}
+  .linhas:has(textarea){padding-top:0}
+}
+</style>
+</head>
+<body>
+<div class="bar">
+</div>
+
+<!-- 1 · TF -->
+<section class="page" id="p1">
+  <div class="cab"><div><div class="sub">EC08 · encontro 1 · TF-IDF à mão · 1 de 4</div><h1>Quantas vezes cada palavra aparece?</h1></div><div class="grupo">Grupo <span></span></div></div>
+  <p>Uma cafeteria guarda quatro avaliações curtas. Elas já estão em minúsculas e sem pontuação: cada palavra é um token. Juntas, são o <b>corpus</b>.</p>
+  <div id="tab-corpus"></div>
+  <p>O <b>vocabulário</b> é a lista das palavras diferentes do corpus, em ordem alfabética: uma coluna para cada uma.</p>
+  <div class="exemplo">
+    <div><span class="tag">Exemplo resolvido</span> &nbsp;<b>A avaliação 1</b></div>
+    <p>Em “o café com leite”, as palavras café, com, leite e o aparecem uma vez cada; as outras seis palavras do vocabulário não aparecem.</p>
+    <div id="ex-tf"></div>
+  </div>
+  <h2><span class="n">1</span>Sua vez: as avaliações 2, 3 e 4</h2>
+  <p>Escreva em cada célula quantas vezes a palavra aparece na avaliação, inclusive os zeros.</p>
+  <div id="tab-tf"></div>
+  <h2><span class="n">2</span>Olhe a tabela inteira</h2>
+  <p>Das 40 células, quantas são zero? <span class="caixa"><span class="ans"></span></span> &nbsp; Que palavras aparecem nas quatro avaliações? <span class="caixa" style="min-width:34mm"><span class="ans"></span></span></p>
+  <div class="nome"><p>Cada número dessa tabela é um <b>TF</b> (<i>term frequency</i>, a frequência da palavra no texto). A tabela inteira é a <b>matriz documento × termo</b> do bag-of-words: uma linha por texto, uma coluna por palavra.</p></div>
+</section>
+
+<!-- 2 · DF E IDF -->
+<section class="page" id="p2">
+  <div class="cab"><div><div class="sub">TF-IDF à mão · 2 de 4</div><h1>Em quantos textos cada palavra aparece?</h1></div><div class="grupo">Grupo <span></span></div></div>
+  <p>Uma palavra que aparece em todas as avaliações não ajuda a separar uma da outra. O <b>DF</b> (<i>document frequency</i>) conta em quantas avaliações a palavra aparece, não importa quantas vezes em cada uma. O <b>IDF</b> transforma o DF num peso: quanto mais rara a palavra, maior o peso.</p>
+  <div class="duas" style="align-items:center">
+    <div class="nome"><p class="formula">IDF = log<sub>2</sub>(N ÷ DF)</p><p class="nota" style="text-align:center">N é o número de avaliações do corpus: aqui, 4.</p></div>
+    <div><table><tr><th>N ÷ DF</th><th>1</th><th>2</th><th>4</th></tr><tr><th>log<sub>2</sub></th><td class="dado">0</td><td class="dado">1</td><td class="dado">2</td></tr></table>
+      <p class="nota" style="margin-top:2mm">log<sub>2</sub> de um número: quantas vezes multiplicamos 2 para chegar a ele. 2 × 2 = 4, então log<sub>2</sub> 4 = 2.</p></div>
+  </div>
+  <div class="exemplo">
+    <div><span class="tag">Exemplo resolvido</span> &nbsp;<b>leite e café</b></div>
+    <p><b>leite</b> só está na avaliação 1: DF = 1, N ÷ DF = 4 ÷ 1 = 4, IDF = log<sub>2</sub> 4 = <b>2</b>. &nbsp; <b>café</b> está nas quatro: DF = 4, N ÷ DF = 1, IDF = log<sub>2</sub> 1 = <b>0</b>.</p>
+  </div>
+  <h2><span class="n">3</span>Sua vez: as outras oito palavras</h2>
+  <p>Use a tabela da página 1.</p>
+  <div id="tab-idf"></div>
+  <h2><span class="n">4</span>O que o IDF faz</h2>
+  <p>Contando as do exemplo resolvido: que palavras ficaram com IDF 0? <span class="caixa" style="min-width:34mm"><span class="ans"></span></span> Que palavras ficaram com o maior IDF? <span class="caixa" style="min-width:50mm"><span class="ans"></span></span></p>
+  <div class="destaque"><b>A cafeteria só tem avaliações sobre café. Faz sentido que “café” tenha peso zero? Por quê?</b><div class="linhas"><i></i><i></i></div></div>
+</section>
+
+<!-- 3 · TF-IDF -->
+<section class="page" id="p3">
+  <div class="cab"><div><div class="sub">TF-IDF à mão · 3 de 4</div><h1>Quanto cada palavra pesa?</h1></div><div class="grupo">Grupo <span></span></div></div>
+  <p>O TF-IDF junta as duas páginas: uma palavra pesa mais quando aparece muitas vezes na avaliação (TF) e em poucas avaliações do corpus (IDF).</p>
+  <div class="nome"><p class="formula">TF-IDF = TF × IDF</p></div>
+  <div class="exemplo">
+    <div><span class="tag">Exemplo resolvido</span> &nbsp;<b>A avaliação 1</b></div>
+    <p>Coluna por coluna, o TF da página 1 vezes o IDF da página 2.</p>
+    <div id="ex-tfidf"></div>
+  </div>
+  <h2><span class="n">5</span>Sua vez: as avaliações 2, 3 e 4</h2>
+  <p>As linhas em cinza são as suas respostas das páginas 1 e 2: na tela, elas se preenchem sozinhas; no papel, copie-as antes de começar.</p>
+  <div id="tab-tfidf"></div>
+  <h2><span class="n">6</span>A palavra de maior peso em cada avaliação</h2>
+  <p>1 <span class="caixa"><span class="ans"></span></span> 2 <span class="caixa"><span class="ans"></span></span> 3 <span class="caixa"><span class="ans"></span></span> 4 <span class="caixa" style="min-width:30mm"><span class="ans"></span></span></p>
+</section>
+
+<!-- 4 · O QUE O PESO DIZ -->
+<section class="page" id="p4">
+  <div class="cab"><div><div class="sub">TF-IDF à mão · 4 de 4</div><h1>O que o peso diz?</h1></div><div class="grupo">Grupo <span></span></div></div>
+  <h2><span class="n">7</span>Repetir ou ser rara</h2>
+  <p>Na avaliação 4, “o café forte e bem forte”:</p>
+  <p><b>forte</b>: TF <span class="caixa"><span class="ans"></span></span> × IDF <span class="caixa"><span class="ans"></span></span> = <span class="caixa"><span class="ans"></span></span> &nbsp;&nbsp; <b>bem</b>: TF <span class="caixa"><span class="ans"></span></span> × IDF <span class="caixa"><span class="ans"></span></span> = <span class="caixa"><span class="ans"></span></span></p>
+  <div class="destaque"><b>“forte” aparece duas vezes e “bem”, uma. Por que as duas pesam o mesmo?</b><div class="linhas"><i></i><i></i></div></div>
+  <h2><span class="n">8</span>O TF-IDF sabe o que é stop word?</h2>
+  <p>O TF-IDF zerou “o” em todas as avaliações, mas deu peso a “com” e a “e”, que também são palavras muito comuns em português.</p>
+  <div class="destaque"><b>Por que “o” zerou e “com” não? O que o TF-IDF mede, afinal?</b><div class="linhas"><i></i><i></i></div></div>
+  <h2><span class="n">9</span>Chega uma quinta avaliação: “chá com leite”</h2>
+  <p>Agora N = 5. Para os novos IDFs: log<sub>2</sub> 1,25 ≈ 0,32 e log<sub>2</sub> 2,5 ≈ 1,32.</p>
+  <div id="tab-n5"></div>
+  <p>As avaliações 1 a 4 não mudaram. Os pesos delas mudam? <span class="caixa" style="min-width:24mm"><span class="ans"></span></span></p>
+  <div class="nome"><p><b>TF-IDF</b>: o peso de uma palavra num texto cresce com as vezes que ela aparece nele (TF) e com a raridade dela no corpus (IDF). Palavra que está em todos os textos pesa zero, quantas vezes aparecer. E o IDF depende do corpus inteiro: um texto novo muda o peso das palavras nos outros. Bibliotecas como o scikit-learn usam uma variação da fórmula, com logaritmo natural e outros ajustes, mas a ideia é a mesma.</p></div>
+</section>
+
+
+<script>
+(function(){
+"use strict";
+const ALUNO=true;
+const DOCS=["o café com leite","o café forte sem açúcar","o café com açúcar e canela","o café forte e bem forte"];
+const N=DOCS.length;
+const VOC=[...new Set(DOCS.flatMap(d=>d.split(" ")))].sort((a,b)=>a.localeCompare(b,"pt"));
+const TF=DOCS.map(d=>{const t=d.split(" ");return VOC.map(w=>t.filter(x=>x===w).length);});
+const DF=VOC.map((w,j)=>TF.filter(r=>r[j]>0).length);
+const IDF=DF.map(df=>Math.log2(N/df));
+const TFIDF=TF.map(r=>r.map((v,j)=>v*IDF[j]));
+const h=(tag,at={},...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(at))if(v!=null)e.setAttribute(k,v);kids.flat(Infinity).forEach(k=>k!=null&&e.append(k instanceof Node?k:document.createTextNode(k)));return e;};
+const $=id=>document.getElementById(id);
+const fmt=v=>typeof v!=="number"?String(v):String(Math.round(v*100)/100).replace(".",",");
+/* uma resposta: vazia na versão do aluno; o id liga o campo às linhas em cinza das páginas seguintes */
+const ans=(v,id)=>h("span",{class:"ans","data-id":id||null},ALUNO?"":fmt(v));
+/* uma linha em cinza que repete uma resposta anterior: na tela do aluno, ela segue o campo de origem */
+const eco=(v,id)=>h("td",{class:"eco","data-de":id},ALUNO?"":fmt(v));
+const cab=rot=>h("tr",{},h("th",{class:"esq"},rot),VOC.map(w=>h("th",{},w)));
+
+/* página 1 */
+$("tab-corpus").append(h("table",{class:"corpus"},DOCS.map((d,i)=>h("tr",{},h("th",{style:"width:12mm"},String(i+1)),h("td",{class:"esq"},d)))));
+$("ex-tf").append(h("table",{},cab("avaliação"),h("tr",{},h("th",{class:"esq"},"1"),TF[0].map(v=>h("td",{class:"dado"},String(v))))));
+$("tab-tf").append(h("table",{},cab("avaliação"),[1,2,3].map(i=>h("tr",{},h("th",{class:"esq"},String(i+1)),TF[i].map((v,j)=>h("td",{},ans(v,`tf-${i}-${j}`)))))));
+
+/* página 2 */
+const EX2=["leite","café"];
+$("tab-idf").append(h("table",{},h("tr",{},h("th",{class:"esq"},"palavra"),h("th",{},"DF"),h("th",{},"N ÷ DF"),h("th",{},"IDF")),
+  VOC.map((w,j)=>EX2.includes(w)?null:h("tr",{},h("td",{class:"esq"},h("b",{},w)),h("td",{},ans(DF[j])),h("td",{},ans(`4 ÷ ${DF[j]} = ${N/DF[j]}`)),h("td",{},ans(IDF[j],`idf-${j}`))))));
+
+/* página 3 */
+$("ex-tfidf").append(h("table",{},cab(""),
+  h("tr",{},h("th",{class:"esq"},"TF"),TF[0].map(v=>h("td",{class:"dado"},String(v)))),
+  h("tr",{},h("th",{class:"esq"},"× IDF"),IDF.map(v=>h("td",{class:"dado"},fmt(v)))),
+  h("tr",{},h("th",{class:"esq"},"= TF-IDF"),TFIDF[0].map(v=>h("td",{class:"dado",style:"font-weight:800"},fmt(v))))));
+/* o IDF das palavras resolvidas no exemplo da página 2 vem impresso; o das outras repete a resposta do grupo */
+const idfCel=j=>EX2.includes(VOC[j])?h("td",{class:"dado"},fmt(IDF[j])):eco(IDF[j],`idf-${j}`);
+$("tab-tfidf").append(h("table",{},cab(""),h("tr",{},h("th",{class:"esq"},"IDF"),VOC.map((_,j)=>idfCel(j))),
+  [1,2,3].map(i=>[h("tr",{class:"forte"},h("th",{class:"esq"},`${i+1} · TF`),TF[i].map((v,j)=>eco(v,`tf-${i}-${j}`))),
+    h("tr",{},h("th",{class:"esq"},`${i+1} · TF-IDF`),TFIDF[i].map(v=>h("td",{},ans(v))))])));
+
+/* página 4: a quinta avaliação */
+const DOC5="chá com leite".split(" ");
+const DF5=VOC.map((w,j)=>DF[j]+(DOC5.includes(w)?1:0)),IDF5=DF5.map(df=>Math.log2(5/df));
+const linha5=w=>{const j=VOC.indexOf(w);return h("tr",{},h("td",{class:"esq"},h("b",{},w)),h("td",{class:"dado"},fmt(IDF[j])),h("td",{},ans(DF5[j])),h("td",{},ans(`5 ÷ ${DF5[j]} = ${fmt(5/DF5[j])}`)),h("td",{},ans(IDF5[j])),h("td",{},ans(IDF5[j]>IDF[j]?"sobe":IDF5[j]<IDF[j]?"desce":"igual")));};
+$("tab-n5").append(h("table",{},h("tr",{},h("th",{class:"esq"},"palavra"),h("th",{},"IDF com 4"),h("th",{},"DF com 5"),h("th",{},"N ÷ DF"),h("th",{},"IDF com 5"),h("th",{},"sobe, desce ou igual?")),
+  ["café","leite"].map(linha5)));
+
+})();
+</script>
+<script>
+/* Versão do aluno, preenchida na tela (computador ou celular): cada resposta vazia vira um campo, as linhas
+   de texto livre viram uma caixa de texto, as linhas em cinza repetem as respostas das páginas anteriores,
+   tudo fica guardado neste navegador e "Baixar PDF" imprime as páginas com o nome do grupo. Embutido por
+   versao_aluno.py depois do script da própria atividade, que já desenhou as páginas. */
+(function(){
+"use strict";
+const h=(tag,at={},...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(at))if(v!=null)e.setAttribute(k,v);kids.flat().forEach(k=>k!=null&&e.append(k instanceof Node?k:document.createTextNode(k)));return e;};
+const TITULO=document.title,STORE="ec08-atividade-"+TITULO.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g,"-");
+
+/* campos */
+const campo=id=>h("input",{class:"campo",type:"text",size:"3",autocomplete:"off",autocapitalize:"off",spellcheck:"false","aria-label":"resposta","data-id":id});
+document.querySelectorAll("span.ans").forEach(s=>s.replaceWith(campo(s.getAttribute("data-id"))));
+document.querySelectorAll(".caixa").forEach(c=>{if(!c.querySelector(".campo"))c.append(campo());});
+document.querySelectorAll(".linhas").forEach(l=>{l.querySelectorAll("i").forEach(i=>i.remove());
+  l.append(h("textarea",{class:"campo",rows:"3","aria-label":"resposta do grupo"}));});
+document.querySelectorAll(".page table").forEach(t=>{const r=h("div",{class:"rola"});t.replaceWith(r);r.append(t);});
+const cresce=t=>{t.style.height="auto";t.style.height=t.scrollHeight+2+"px";};
+
+/* o grupo: um campo no cabeçalho da primeira página, repetido nas outras */
+const cabs=[...document.querySelectorAll(".cab .grupo span")];
+const grupo=h("input",{class:"campo",id:"grupo",autocomplete:"off",placeholder:"nome do grupo","aria-label":"grupo"});
+if(cabs[0])cabs[0].replaceWith(grupo);
+const mostraGrupo=()=>cabs.slice(1).forEach(s=>s.textContent=grupo.value.trim());
+
+/* as linhas em cinza seguem os campos de origem */
+const ecos=[...document.querySelectorAll("[data-de]")];
+const atualizaEcos=()=>ecos.forEach(e=>{const c=document.querySelector(`input[data-id="${e.getAttribute("data-de")}"]`);e.textContent=c?c.value.trim():"";});
+
+/* só o botão de baixar o PDF */
+const pdf=h("button",{type:"button",class:"pdf"},"Baixar PDF"),estado=h("p",{class:"estado","aria-live":"polite"});
+document.querySelector(".bar").replaceChildren(pdf,estado);
+
+/* guardado neste navegador; uma atividade alterada (outro número de campos) começa vazia */
+const campos=[...document.querySelectorAll(".page .campo")].filter(c=>c!==grupo);
+function salva(){try{localStorage.setItem(STORE,JSON.stringify({n:campos.length,grupo:grupo.value,campos:campos.map(c=>c.value)}));}catch(e){}}
+let guardado=null;try{guardado=JSON.parse(localStorage.getItem(STORE)||"null");}catch(e){}
+if(guardado){grupo.value=guardado.grupo||"";if(guardado.n===campos.length)campos.forEach((c,j)=>{c.value=guardado.campos[j]||"";});}
+document.addEventListener("input",e=>{if(e.target.tagName==="TEXTAREA")cresce(e.target);if(e.target===grupo){grupo.classList.remove("falta");estado.textContent="";mostraGrupo();}atualizaEcos();salva();});
+mostraGrupo();atualizaEcos();document.querySelectorAll("textarea").forEach(cresce);
+
+/* PDF: a janela de impressão do navegador, com "Salvar como PDF" */
+addEventListener("beforeprint",()=>document.querySelectorAll("textarea").forEach(cresce));
+pdf.addEventListener("click",()=>{
+  if(grupo.value.trim().length<2){grupo.classList.add("falta");grupo.focus();estado.textContent="Escreva o nome do grupo antes de baixar.";return;}
+  document.title=`${TITULO} - ${grupo.value.trim()}`;estado.textContent="Na janela de impressão, escolha “Salvar como PDF”. No celular, use Compartilhar ou Imprimir e salve em PDF.";
+  setTimeout(()=>{print();document.title=TITULO;},50);});
+})();
+</script>
+</body>
+</html>
