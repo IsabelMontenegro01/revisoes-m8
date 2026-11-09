@@ -1,86 +1,94 @@
 ## Contexto
 
-1. TF-IDF: uma maneira de calcular a importância de cada palavra em um texto, considerando sua frequência e sua raridade em relação aos outros textos.
+&emsp;1. **TF-IDF:** uma maneira de calcular a importância de cada palavra em um texto, considerando sua frequência e sua raridade em relação aos outros textos.
 
-2. Word2Vec: uma maneira de transformar palavras em vetores numéricos, de modo que palavras usadas em contextos semelhantes tenham representações matemáticas parecidas.
+&emsp;2. **Word2Vec:** uma maneira de transformar palavras em vetores numéricos, de modo que palavras usadas em contextos semelhantes tenham representações matemáticas parecidas.
 
-O material tem quatro páginas HTML:
-- [introdução à transformação de texto em vetores](do-texto-aos-vetores.html)
-- [atividade interativa de TF-IDF](tfidf-a-mao.html)
-- [explicação interativa de Word2Vec](word2vec.html)
-- [atividade interativa de Word2Vec com cálculos manuais](word2vec-a-mao.html)
+&emsp;O material tem quatro páginas HTML:
+
+- [Introdução à transformação de texto em vetores](do-texto-aos-vetores.html)
+- [Atividade interativa de TF-IDF](tfidf-a-mao.html)
+- [Explicação interativa de Word2Vec](word2vec.html)
+- [Atividade interativa de Word2Vec com cálculos manuais](word2vec-a-mao.html)
 
 ```mermaid
 graph TD
     A["Texto original<br><b>&quot;Eu gosto de café&quot;</b>"] --> B["Tokenização<br><b>(Eu)  (gosto)  (de)  (café)</b>"]
-    
+
     B --> C["<b>Representação numérica</b>"]
-    
+
     C --> D["<b>TF-IDF</b><br>Um peso para cada palavra."]
     C --> E["<b>Word2Vec</b><br>Um vetor que representa cada palavra."]
-    
+
     D --> F["<b>O computador consegue fazer cálculos com o texto.</b>"]
     E --> F
-    
+
     %% Estilização opcional para destacar os blocos principais
     style D fill:#0b1320,stroke:#1a2332,color:#fff
     style E fill:#061a12,stroke:#0a291d,color:#fff
-
 ```
 
-Antes de estudar as duas técnicas, guarde dois conceitos:
-- Token: uma unidade de texto, geralmente uma palavra. Na frase "gosto de café", temos três tokens.
-- Corpus: conjunto de textos que estamos analisando. Se tivermos quatro avaliações de uma cafeteria, as quatro juntas formam o corpus.
+&emsp;Antes de estudar as duas técnicas, guarde dois conceitos:
 
-## 2. Pré-processamento de texto
+- **Token:** uma unidade de texto, geralmente uma palavra. Na frase "gosto de café", temos três tokens.
+- **Corpus:** conjunto de textos que estamos analisando. Se tivermos quatro avaliações de uma cafeteria, as quatro juntas formam o corpus.
 
-três textos sobre café:
-- Um tweet: "não tomei o cafezinho!!! 😴 #café"
+## 1. Pré-processamento de texto
+
+&emsp;Três textos sobre café:
+
+- Um tweet: "não tomei o cafezinho!!! 😴 #café".
 - Um trecho de livro: "O café fumegava na caneca."
 - Um artigo científico: "A cafeína do café reduz o sono."
 
-### 2.1 Tokenização
-dividir um texto em partes menores chamadas tokens.
+### 1.1. Tokenização
 
-Exemplo: 
-Eu gosto muito de café -> 
-["Eu", "gosto", "muito", "de", "café"]
+&emsp;Dividir um texto em partes menores chamadas tokens.
 
-O [site](do-texto-aos-vetores.html) compara duas formas de fazer isso:
+&emsp;Exemplo:
 
-1. Separar pelos espaços
+&emsp;Eu gosto muito de café →
 
-É a forma mais simples. O computador encontra os espaços e divide o texto.
+&emsp;["Eu", "gosto", "muito", "de", "café"]
 
-Problema: a pontuação fica grudada nas palavras.
+&emsp;O [site](do-texto-aos-vetores.html) compara duas formas de fazer isso:
 
-"cafezinho!!!" vira um único token.
+**1. Separar pelos espaços**
 
-2. Usar um tokenizador
+&emsp;É a forma mais simples. O computador encontra os espaços e divide o texto.
 
-O site demonstra a biblioteca NLTK, que possui regras para reconhecer melhor as unidades do texto.
+&emsp;Problema: a pontuação fica grudada nas palavras.
 
-Nesse caso:
+&emsp;"cafezinho!!!" vira um único token.
 
-"cafezinho!!!" vira:
+**2. Usar um tokenizador**
 
-["cafezinho", "!", "!", "!"]
+&emsp;O site demonstra a biblioteca NLTK, que possui regras para reconhecer melhor as unidades do texto.
 
-> Se queremos analisar palavras, geralmente não queremos tratar três pontos de exclamação como parte da palavra.
+&emsp;Nesse caso:
 
-### 2.2. Vocabulário e identificadores
-Depois da tokenização, podemos montar um vocabulário, lista de todas as palavras diferentes encontradas nos textos.
+&emsp;"cafezinho!!!" vira:
 
-Imagine:
-- Texto 1: eu gosto de café
-- Texto 2: eu gosto de chá
+&emsp;["cafezinho", "!", "!", "!"]
 
-Vocabulário:
-["eu", "gosto", "de", "café", "chá"]
+> &emsp;Se queremos analisar palavras, geralmente não queremos tratar três pontos de exclamação como parte da palavra.
 
-As palavras repetidas aparecem apenas uma vez.
+### 1.2. Vocabulário e identificadores
 
-O computador pode atribuir um número para cada palavra:
+&emsp;Depois da tokenização, podemos montar um vocabulário, lista de todas as palavras diferentes encontradas nos textos.
+
+&emsp;Imagine:
+
+- Texto 1: eu gosto de café.
+- Texto 2: eu gosto de chá.
+
+&emsp;Vocabulário:
+
+&emsp;["eu", "gosto", "de", "café", "chá"]
+
+&emsp;As palavras repetidas aparecem apenas uma vez.
+
+&emsp;O computador pode atribuir um número para cada palavra:
 
 | Palavra | Identificador |
 | :--- | :--- |
@@ -90,37 +98,41 @@ O computador pode atribuir um número para cada palavra:
 | café | 3 |
 | chá | 4 |
 
-Assim, o texto 1 pode ser representado por:
+&emsp;Assim, o texto 1 pode ser representado por:
 
-[0, 1, 2, 3]
+&emsp;[0, 1, 2, 3]
 
-E o texto 2:
+&emsp;E o texto 2:
 
-[0, 1, 2, 4]
+&emsp;[0, 1, 2, 4]
 
-> O número 4 não significa que chá seja maior ou mais importante que café. É apenas uma posição na lista. Não representa o significado da palavra.
+> &emsp;O número 4 não significa que chá seja maior ou mais importante que café. É apenas uma posição na lista. Não representa o significado da palavra.
 
-Problema: Se procurarmos "cafés", mas só temos "café", o identificador não existe.
+&emsp;Problema: se procurarmos "cafés", mas só temos "café", o identificador não existe.
 
-### 2.3. Normalização
+### 1.3. Normalização
 
-Padronizar os tokens para evitar que diferenças superficiais sejam tratadas como palavras diferentes.
+&emsp;Padronizar os tokens para evitar que diferenças superficiais sejam tratadas como palavras diferentes.
 
-Exemplos:
-- Café → café
-- CAFÉ → café
-- café! → café (depois da remoção da pontuação)
-No site, são demonstradas duas operações:
-- Converter tudo para minúsculas (lower()).
+&emsp;Exemplos:
+
+- Café → café.
+- CAFÉ → café.
+- café! → café (depois da remoção da pontuação).
+
+&emsp;No site, são demonstradas duas operações:
+
+- Converter tudo para minúsculas (`lower()`).
 - Remover pontuação e símbolos, mantendo letras e números.
 
-Sem normalização, o computador poderia considerar Café, café e CAFÉ três palavras diferentes.
+&emsp;Sem normalização, o computador poderia considerar Café, café e CAFÉ três palavras diferentes.
 
-### 2.4. Stop words
+### 1.4. Stop words
 
-Stop words são palavras muito comuns que, em determinadas tarefas, podem não trazer muita informação.
+&emsp;Stop words são palavras muito comuns que, em determinadas tarefas, podem não trazer muita informação.
 
-Exemplos em português:
+&emsp;Exemplos em português:
+
 - o
 - a
 - de
@@ -128,59 +140,68 @@ Exemplos em português:
 - na
 - e
 
-Exemplo:
+&emsp;Exemplo:
 
-"Eu gosto de café"
+&emsp;"Eu gosto de café."
 
-Depois de remover algumas stop words:
+&emsp;Depois de remover algumas stop words:
 
-"gosto café"
+&emsp;"gosto café"
 
-**Por que fazer isso?** palavras como "de" e "o" aparecem tanto que não ajudam a distinguir um texto de outro.
+**Por que fazer isso?**
 
-> Remover stop words não é obrigatório,depende da tarefa
+&emsp;Palavras como "de" e "o" aparecem tanto que não ajudam a distinguir um texto de outro.
 
-o site mostra "não" na lista de stop words usada pelo NLTK, mas ela pode ser extremamente importante e removê-la alteraria completamente o sentido da frase 
+> &emsp;Remover stop words não é obrigatório, depende da tarefa.
 
-exemplo:
-"Eu gostei do produto."
-"Eu não gostei do produto."
+&emsp;O site mostra "não" na lista de stop words usada pelo NLTK, mas ela pode ser extremamente importante e removê-la alteraria completamente o sentido da frase.
 
-Assim, o stop word é útil quando o foco está no significado central do texto.
+&emsp;Exemplo:
 
-### 2.5. Stemming e lematização
-Essas duas técnicas tentam reduzir palavras que possuem variações para uma forma comum.
+&emsp;"Eu gostei do produto."
 
-Imagine:
+&emsp;"Eu não gostei do produto."
+
+&emsp;Assim, a stop word é útil quando o foco está no significado central do texto.
+
+### 1.5. Stemming e lematização
+
+&emsp;Essas duas técnicas tentam reduzir palavras que possuem variações para uma forma comum.
+
+&emsp;Imagine:
+
 - estudar
 - estudando
 - estudou
 - estudaremos
-Todas estão relacionadas ao verbo estudar.
+
+&emsp;Todas estão relacionadas ao verbo estudar.
 
 **Stemming**
 
-Ele corta partes da palavra, geralmente sufixos, para encontrar um radical. É um processo mais simples.
+&emsp;Ele corta partes da palavra, geralmente sufixos, para encontrar um radical. É um processo mais simples.
 
-Exemplo:
+&emsp;Exemplo:
 
-estudando → estud
+&emsp;estudando → estud
 
-O resultado nem sempre é uma palavra existente no dicionário.
+&emsp;O resultado nem sempre é uma palavra existente no dicionário.
 
-No site, é utilizado o RSLPStemmer, da biblioteca NLTK para português.
+&emsp;No site, é utilizado o RSLPStemmer, da biblioteca NLTK para português.
 
 **Lematização**
 
-Tenta encontrar a forma de dicionário da palavra, chamada de lema. É um processo mais linguístico.
+&emsp;Tenta encontrar a forma de dicionário da palavra, chamada de lema. É um processo mais linguístico.
 
-Exemplos:
+&emsp;Exemplos:
+
 - estudando → estudar
 - estudou → estudar
 - gatos → gato
-O site demonstra essa operação com a biblioteca spaCy.
 
-Diferenças:
+&emsp;O site demonstra essa operação com a biblioteca spaCy.
+
+&emsp;Diferenças:
 
 | Stemming | Lematização |
 | :--- | :--- |
@@ -188,127 +209,138 @@ Diferenças:
 | Mais simples | Mais linguística |
 | Pode gerar fragmentos | Busca uma palavra válida |
 
-### 2.6. Subpalavras: BPE (Byte Pair Encoding).
+### 1.6. Subpalavras: BPE (Byte Pair Encoding)
 
-Em vez de considerar cada palavra inteira como uma unidade, podemos dividi-la em pedaços menores.
+&emsp;Em vez de considerar cada palavra inteira como uma unidade, podemos dividi-la em pedaços menores.
 
-Imagine a palavra:
+&emsp;Imagine a palavra:
 
-cafezinho
+&emsp;cafezinho
 
-Ela poderia ser dividida em:
+&emsp;Ela poderia ser dividida em:
 
-café + zinho
+&emsp;café + zinho
 
-Ou em outras combinações de caracteres, dependendo do treinamento.
+&emsp;Ou em outras combinações de caracteres, dependendo do treinamento.
 
-Como o BPE funciona?
+**Como o BPE funciona?**
+
 1. Começa dividindo as palavras em caracteres.
 2. Conta quais pares de caracteres aparecem juntos com maior frequência.
 3. Junta o par mais frequente em uma nova unidade.
 4. Repete o processo.
-Isso ajuda a lidar com palavras que não apareceram exatamente daquela forma durante o treinamento.
 
-Por exemplo, se o modelo conhece café e aprende o sufixo s, pode conseguir representar cafés usando unidades que já conhece.
+&emsp;Isso ajuda a lidar com palavras que não apareceram exatamente daquela forma durante o treinamento.
 
-Essa técnica é muito utilizada em tokenizadores de modelos de linguagem.
+&emsp;Por exemplo, se o modelo conhece café e aprende o sufixo s, pode conseguir representar cafés usando unidades que já conhece.
 
-## 3. Bag of Words (BoW, ou saco de palavras): transformando textos em tabelas
+&emsp;Essa técnica é muito utilizada em tokenizadores de modelos de linguagem.
 
-Agora chegamos à primeira representação numérica que prepara o terreno para TF-IDF.
+## 2. Bag of Words (BoW, ou saco de palavras): transformando textos em tabelas
 
-Representar cada texto contando quantas vezes cada palavra aparece nele.
+&emsp;Agora chegamos à primeira representação numérica que prepara o terreno para TF-IDF.
 
-Imagine dois textos:
-- Documento 1: "gosto de café"
-- Documento 2: "gosto de chá"
-Nosso vocabulário é:
+&emsp;Representar cada texto contando quantas vezes cada palavra aparece nele.
 
-["café", "chá", "de", "gosto"]
+&emsp;Imagine dois textos:
 
-Podemos construir uma tabela:
+- Documento 1: "gosto de café".
+- Documento 2: "gosto de chá".
+
+&emsp;Nosso vocabulário é:
+
+&emsp;["café", "chá", "de", "gosto"]
+
+&emsp;Podemos construir uma tabela:
 
 | Documento | café | chá | de | gosto |
 | :--- | :--- | :--- | :--- | :--- |
 | 1 | 1 | 0 | 1 | 1 |
 | 2 | 0 | 1 | 1 | 1 |
 
-Essa tabela é chamada de matriz documento × termo.
+&emsp;Essa tabela é chamada de matriz documento × termo.
+
 - Cada linha representa um documento.
 - Cada coluna representa uma palavra.
 - Cada célula representa quantas vezes aquela palavra aparece no documento.
-Isso também é chamado de TF (Term Frequency) quando estamos considerando a contagem da palavra em cada texto.
 
-> Limitação: BoW não considera a ordem das palavras.
+&emsp;Isso também é chamado de TF (Term Frequency) quando estamos considerando a contagem da palavra em cada texto.
 
-Por exemplo:
+> &emsp;Limitação: BoW não considera a ordem das palavras.
+
+&emsp;Por exemplo:
+
 - "O cachorro mordeu o homem."
 - "O homem mordeu o cachorro."
 
-As duas frases possuem praticamente as mesmas palavras e contagens, mas significados diferentes.
+&emsp;As duas frases possuem praticamente as mesmas palavras e contagens, mas significados diferentes.
 
-O BoW não consegue perceber essa diferença.
+&emsp;O BoW não consegue perceber essa diferença.
 
-### 3.1. N-gramas: considerando combinações de palavras
+### 2.1. N-gramas: considerando combinações de palavras
 
-Para diminuir essa limitação, o site também demonstra n-gramas.
+&emsp;Para diminuir essa limitação, o site também demonstra n-gramas.
 
-Um n-grama é uma sequência de N palavras consecutivas.
+&emsp;Um n-grama é uma sequência de N palavras consecutivas.
 
 - Unigrama: uma palavra.
 - Bigramas: duas palavras consecutivas.
 - Trigramas: três palavras consecutivas.
 
-Exemplo:
+&emsp;Exemplo:
 
-"tomei café não chá"
+&emsp;"tomei café não chá"
 
-Unigramas:
+&emsp;Unigramas:
+
 - tomei
 - café
 - não
 - chá
 
-Bigramas:
+&emsp;Bigramas:
+
 - tomei café
 - café não
 - não chá
 
-O site compara estas frases:
-1. "tomei café, não chá"
-2. "tomei chá, não café"
+&emsp;O site compara estas frases:
 
-Com unigramas, as duas possuem exatamente as mesmas palavras e contagens.
+1. "tomei café, não chá".
+2. "tomei chá, não café".
 
-Com bigramas, conseguimos perceber diferenças na ordem e nas combinações.
+&emsp;Com unigramas, as duas possuem exatamente as mesmas palavras e contagens.
+
+&emsp;Com bigramas, conseguimos perceber diferenças na ordem e nas combinações.
 
 **Ideia principal:** n-gramas acrescentam um pouco de informação contextual ao Bag of Words, mas ainda não compreendem o significado das frases.
 
-## 4. TF-IDF: descobrindo quais palavras são importantes
+## 3. TF-IDF: descobrindo quais palavras são importantes
 
-Técnica que atribui um peso para cada palavra de cada documento.
+&emsp;Técnica que atribui um peso para cada palavra de cada documento.
 
-A pergunta que ele tenta responder é:
+&emsp;A pergunta que ele tenta responder é:
 
-Quais palavras são mais importantes para identificar ou diferenciar este texto dos demais?
+&emsp;Quais palavras são mais importantes para identificar ou diferenciar este texto dos demais?
 
-Pense em duas situações:
+&emsp;Pense em duas situações:
+
 - Uma palavra aparece muitas vezes em um documento.
 - Uma palavra aparece em poucos documentos do corpus.
 
-As duas situações são relevantes, mas de maneiras diferentes.
+&emsp;As duas situações são relevantes, mas de maneiras diferentes.
 
-O TF-IDF combina essas duas informações.
+&emsp;O TF-IDF combina essas duas informações.
 
-### 4.1. TF: Term Frequency (Frequência do termo)
+### 3.1. TF: Term Frequency (Frequência do termo)
 
-É a quantidade de vezes que uma palavra aparece em determinado documento.
+&emsp;É a quantidade de vezes que uma palavra aparece em determinado documento.
 
-Exemplo:
+&emsp;Exemplo:
 
-Documento:
+&emsp;Documento:
 
-"Eu gosto de café. Café é muito bom."
+&emsp;"Eu gosto de café. Café é muito bom."
 
 | Palavra | TF |
 | :--- | :--- |
@@ -320,21 +352,21 @@ Documento:
 | muito | 1 |
 | bom | 1 |
 
-A palavra café tem TF = 2 porque aparece duas vezes.
+&emsp;A palavra café tem TF = 2 porque aparece duas vezes.
 
-Na atividade do professor, o TF é simplesmente a contagem absoluta, sem divisão pelo tamanho do documento.
+&emsp;Na atividade do professor, o TF é simplesmente a contagem absoluta, sem divisão pelo tamanho do documento.
 
-### 4.2. DF: Document Frequency
+### 3.2. DF: Document Frequency
 
-Agora imagine que temos quatro documentos.
+&emsp;Agora imagine que temos quatro documentos.
 
-O DF responde:
+&emsp;O DF responde:
 
-Em quantos documentos diferentes essa palavra aparece?
+&emsp;Em quantos documentos diferentes essa palavra aparece?
 
-Não importa quantas vezes ela aparece dentro de cada documento. Importa em quantos documentos ela está presente.
+&emsp;Não importa quantas vezes ela aparece dentro de cada documento. Importa em quantos documentos ela está presente.
 
-Exemplo:
+&emsp;Exemplo:
 
 | Documento | café | leite |
 | :--- | :--- | :--- |
@@ -343,29 +375,33 @@ Exemplo:
 | 3 | 3 | 0 |
 | 4 | 1 | 0 |
 
-Temos:
+&emsp;Temos:
+
 - DF(café) = 4, porque café aparece nos quatro documentos.
 - DF(leite) = 1, porque leite aparece somente no documento 1.
 
-Perceba a diferença:
+&emsp;Perceba a diferença:
+
 - TF conta ocorrências dentro de um documento.
 - DF conta documentos que contêm a palavra.
 
-### 4.3. IDF: Inverse Document Frequency (frequência inversa de documentos)
+### 3.3. IDF: Inverse Document Frequency (frequência inversa de documentos)
 
-A ideia é dar mais importância às palavras que aparecem em poucos documentos e menos importância às palavras que aparecem em quase todos.
+&emsp;A ideia é dar mais importância às palavras que aparecem em poucos documentos e menos importância às palavras que aparecem em quase todos.
 
-A fórmula utilizada pelo professor é:
+&emsp;A fórmula utilizada pelo professor é:
 
 $$IDF(t) = \log_2 \left( \frac{N}{DF(t)} \right)$$
 
-Onde:
+&emsp;Onde:
+
 - \(N\): quantidade total de documentos.
 - \(DF(t)\): quantidade de documentos que contêm a palavra.
 - \(\log_2\): logaritmo na base 2.
-Vamos entender o que acontece.
 
-Imagine que temos quatro documentos.
+&emsp;Vamos entender o que acontece.
+
+&emsp;Imagine que temos quatro documentos.
 
 | DF | N / DF | IDF |
 | :--- | :--- | :--- |
@@ -373,22 +409,23 @@ Imagine que temos quatro documentos.
 | 2 | 4/2 = 2 | 1 |
 | 1 | 4/1 = 4 | 2 |
 
-Portanto:
+&emsp;Portanto:
+
 - Se uma palavra aparece em todos os documentos, IDF = 0.
 - Se aparece em metade dos documentos, IDF = 1.
 - Se aparece em apenas um documento, IDF = 2.
 
 **Por que uma palavra comum recebe peso zero?**
 
-Porque ela não ajuda a distinguir um documento dos outros.
+&emsp;Porque ela não ajuda a distinguir um documento dos outros.
 
-Imagine que todos os documentos de uma cafeteria falem sobre café. A palavra "café" aparece em todos eles.
+&emsp;Imagine que todos os documentos de uma cafeteria falem sobre café. A palavra "café" aparece em todos eles.
 
-Saber que um documento contém a palavra café não ajuda a identificar qual avaliação estamos lendo.
+&emsp;Saber que um documento contém a palavra café não ajuda a identificar qual avaliação estamos lendo.
 
-Já a palavra "canela", que pode aparecer em apenas uma avaliação, ajuda muito mais a diferenciá-la.
+&emsp;Já a palavra "canela", que pode aparecer em apenas uma avaliação, ajuda muito mais a diferenciá-la.
 
-### 4.4. TF-IDF: juntando as duas medidas
+### 3.4. TF-IDF: juntando as duas medidas
 
 $$TFIDF(t,d) = TF(t,d) \times IDF(t)$$
 
@@ -396,124 +433,135 @@ $$TFIDF(t,d) = TF(t,d) \times IDF(t)$$
 - IDF mede o quanto ela é rara no corpus.
 - TF-IDF combina as duas coisas.
 
-Uma palavra terá peso alto quando aparecer bastante no documento e for relativamente rara no conjunto de documentos.
-Uma analogia
-Imagine que você está tentando identificar qual aluno escreveu uma redação.
+&emsp;Uma palavra terá peso alto quando aparecer bastante no documento e for relativamente rara no conjunto de documentos.
 
-Todos os alunos utilizam palavras como "o", "a", "de" e "que". Essas palavras não ajudam muito a identificar o autor.
+**Uma analogia**
 
-Mas imagine que apenas um aluno utiliza várias vezes a palavra "astronomia".
+&emsp;Imagine que você está tentando identificar qual aluno escreveu uma redação.
 
-Essa palavra é muito mais característica daquela redação.
+&emsp;Todos os alunos utilizam palavras como "o", "a", "de" e "que". Essas palavras não ajudam muito a identificar o autor.
 
-É justamente essa ideia que o TF-IDF tenta capturar.
+&emsp;Mas imagine que apenas um aluno utiliza várias vezes a palavra "astronomia".
 
->O que você precisa saber fazer em uma prova de TF-IDF
->1. Identificar o vocabulário.
->2. Construir a matriz documento × termo.
->3. Calcular o TF.
->4. Calcular o DF.
->5. Aplicar a fórmula do IDF.
->6. Multiplicar TF × IDF.
->7. Interpretar o significado dos pesos.
+&emsp;Essa palavra é muito mais característica daquela redação.
 
-## 5. Similaridade de cosseno
+&emsp;É justamente essa ideia que o TF-IDF tenta capturar.
 
-Ele mostra como podemos utilizar os vetores TF-IDF para comparar documentos e fazer buscas.
+> **O que você precisa saber fazer em uma prova de TF-IDF:**
+>
+> 1. Identificar o vocabulário.
+> 2. Construir a matriz documento × termo.
+> 3. Calcular o TF.
+> 4. Calcular o DF.
+> 5. Aplicar a fórmula do IDF.
+> 6. Multiplicar TF × IDF.
+> 7. Interpretar o significado dos pesos.
 
-Mas como comparamos dois vetores?
+## 4. Similaridade de cosseno
 
-Utilizamos a similaridade de cosseno.
+&emsp;Ele mostra como podemos utilizar os vetores TF-IDF para comparar documentos e fazer buscas.
 
-A ideia é medir o ângulo entre dois vetores:
+&emsp;Mas como comparamos dois vetores?
+
+&emsp;Utilizamos a similaridade de cosseno.
+
+&emsp;A ideia é medir o ângulo entre dois vetores:
+
 - Cosseno próximo de 1: vetores apontam para direções semelhantes.
 - Cosseno próximo de 0: vetores são aproximadamente perpendiculares.
 - Cosseno próximo de -1: vetores apontam em direções opostas.
 
-A fórmula é por produto escalar
+&emsp;A fórmula é por produto escalar.
 
-Isso é uma das ideias por trás dos sistemas de busca textual.
+&emsp;Isso é uma das ideias por trás dos sistemas de busca textual.
 
-## 6. Word2Vec: ensinando o computador a representar palavras pelo contexto 
+## 5. Word2Vec: ensinando o computador a representar palavras pelo contexto
 
-O TF-IDF responde:
+&emsp;O TF-IDF responde:
 
-"Quais palavras são importantes para identificar este documento?"
+&emsp;"Quais palavras são importantes para identificar este documento?"
 
-O Word2Vec tenta responder outra pergunta:
+&emsp;O Word2Vec tenta responder outra pergunta:
 
 **Como representar uma palavra numericamente de modo que palavras utilizadas em contextos semelhantes tenham vetores semelhantes?**
 
-### 6.1. A ideia da hipótese distribucional
+### 5.1. A ideia da hipótese distribucional
 
-De forma simplificada:
-Palavras que aparecem em contextos semelhantes tendem a ter significados ou funções semelhantes.
+&emsp;De forma simplificada:
 
-Vamos imaginar estas frases:
+&emsp;Palavras que aparecem em contextos semelhantes tendem a ter significados ou funções semelhantes.
+
+&emsp;Vamos imaginar estas frases:
+
 - Eu bebi café quente.
 - Eu bebi chá quente.
 - Eu bebi leite quente.
-Observe:
 
-A palavra café aparece próxima de "bebi" e "quente".
+&emsp;Observe:
 
-A palavra chá também aparece próxima de "bebi" e "quente".
+&emsp;A palavra café aparece próxima de "bebi" e "quente".
 
-A palavra leite também poderia aparecer nos mesmos contextos.
+&emsp;A palavra chá também aparece próxima de "bebi" e "quente".
 
-Mesmo que o computador não saiba o que é café ou chá, ele consegue perceber que essas palavras são utilizadas de maneira semelhante.
+&emsp;A palavra leite também poderia aparecer nos mesmos contextos.
 
-É essa informação que o Word2Vec tenta aprender.
+&emsp;Mesmo que o computador não saiba o que é café ou chá, ele consegue perceber que essas palavras são utilizadas de maneira semelhante.
 
-### 6.2. O que é um embedding?
+&emsp;É essa informação que o Word2Vec tenta aprender.
 
-Representação de uma palavra por meio de um vetor numérico.
+### 5.2. O que é um embedding?
 
-Os embeddings podem possuir dezenas, centenas ou milhares de dimensões.
+&emsp;Representação de uma palavra por meio de um vetor numérico.
 
-E o computador não recebe uma definição pronta de cada palavra. Ele aprende os números durante o treinamento.
+&emsp;Os embeddings podem possuir dezenas, centenas ou milhares de dimensões.
 
-### 6.3. Como o Word2Vec aprende?
+&emsp;E o computador não recebe uma definição pronta de cada palavra. Ele aprende os números durante o treinamento.
 
-A ideia é treinar uma rede neural para prever relações entre palavras.
+### 5.3. Como o Word2Vec aprende?
 
-Exemplo:
-- bebi café quente
-- bebi chá quente
-- bebi xurupa quente
+&emsp;A ideia é treinar uma rede neural para prever relações entre palavras.
 
-Xurupa é uma palavra inventada. Não sabemos o que significa.
+&emsp;Exemplo:
 
-Entretanto, ela aparece exatamente no mesmo contexto de café e chá.
+- bebi café quente.
+- bebi chá quente.
+- bebi xurupa quente.
 
-A hipótese é que, durante o treinamento, o Word2Vec perceba que xurupa possui um comportamento contextual semelhante ao de café e chá.
+&emsp;Xurupa é uma palavra inventada. Não sabemos o que significa.
 
-Para entender isso, precisamos aprender quatro conceitos.
+&emsp;Entretanto, ela aparece exatamente no mesmo contexto de café e chá.
 
-#### A. Janela de contexto (window)
-A janela define quantas palavras ao redor de uma palavra serão consideradas como contexto.
+&emsp;A hipótese é que, durante o treinamento, o Word2Vec perceba que xurupa possui um comportamento contextual semelhante ao de café e chá.
 
-Exemplo:
+&emsp;Para entender isso, precisamos aprender quatro conceitos.
 
-"bebi café quente"
+**A. Janela de contexto (window)**
 
-Com janela 1:
+&emsp;A janela define quantas palavras ao redor de uma palavra serão consideradas como contexto.
+
+&emsp;Exemplo:
+
+&emsp;"bebi café quente"
+
+&emsp;Com janela 1:
+
 - Contexto de bebi: café.
 - Contexto de café: bebi e quente.
 - Contexto de quente: café.
-Se aumentarmos a janela para 2, poderíamos considerar palavras ainda mais distantes.
 
-Portanto, o tamanho da janela influencia quais relações o modelo aprende.
+&emsp;Se aumentarmos a janela para 2, poderíamos considerar palavras ainda mais distantes.
 
-#### B. Pares de treinamento
+&emsp;Portanto, o tamanho da janela influencia quais relações o modelo aprende.
 
-No Word2Vec, transformamos as frases em exemplos de treinamento.
+**B. Pares de treinamento**
 
-Com janela 1, a frase:
+&emsp;No Word2Vec, transformamos as frases em exemplos de treinamento.
 
-"bebi café quente"
+&emsp;Com janela 1, a frase:
 
-Gera:
+&emsp;"bebi café quente"
+
+&emsp;Gera:
 
 | Entrada | Contexto |
 | :--- | :--- |
@@ -522,26 +570,28 @@ Gera:
 | café | quente |
 | quente | café |
 
-Cada par é uma tarefa de aprendizado.
+&emsp;Cada par é uma tarefa de aprendizado.
 
-Por exemplo:
+&emsp;Por exemplo:
 
-café → quente
+&emsp;café → quente
 
-A rede recebe café e tenta prever quente.
+&emsp;A rede recebe café e tenta prever quente.
 
-Se ela conseguir prever corretamente os contextos das palavras, estará aprendendo a estrutura de utilização dessas palavras.
+&emsp;Se ela conseguir prever corretamente os contextos das palavras, estará aprendendo a estrutura de utilização dessas palavras.
 
-#### C. W_in e W_out
+**C. W_in e W_out**
 
-Essa é provavelmente a parte mais importante para entender os cálculos do exercício.
+&emsp;Essa é provavelmente a parte mais importante para entender os cálculos do exercício.
 
-O Word2Vec utiliza duas matrizes de pesos:
+&emsp;O Word2Vec utiliza duas matrizes de pesos:
+
 - \(W_{in}\): pesos utilizados para representar a palavra de entrada.
 - \(W_{out}\): pesos utilizados para representar as palavras que podem ser previstas como saída.
-Cada palavra possui uma linha em cada matriz.
 
-Imagine que estamos usando apenas duas dimensões:
+&emsp;Cada palavra possui uma linha em cada matriz.
+
+&emsp;Imagine que estamos usando apenas duas dimensões:
 
 | Palavra | W_in (x, y) |
 | :--- | :--- |
@@ -549,39 +599,43 @@ Imagine que estamos usando apenas duas dimensões:
 | chá | (2, -1) |
 | quente | (2, 1) |
 
-Esses valores são os pesos aprendidos pela rede.
+&emsp;Esses valores são os pesos aprendidos pela rede.
 
-Quando recebemos café como entrada, pegamos seu vetor em \(W_{in}\).
+&emsp;Quando recebemos café como entrada, pegamos seu vetor em \(W_{in}\).
 
-Para cada palavra possível de saída, usamos sua linha em \(W_{out}\).
+&emsp;Para cada palavra possível de saída, usamos sua linha em \(W_{out}\).
 
-#### D. A rede calcula pontuações
+**D. A rede calcula pontuações**
 
-A rede compara o vetor de entrada com cada possível saída usando o produto escalar.
+&emsp;A rede compara o vetor de entrada com cada possível saída usando o produto escalar.
 
-A fórmula é:
+&emsp;A fórmula é:
+
 \[\text{pontuação}(i,j)=W_{in}(i)\cdot W_{out}(j)\]
 
-Com duas dimensões:
+&emsp;Com duas dimensões:
+
 \[s=x_{in}x_{out}+y_{in}y_{out}\]
 
-Quanto maior a pontuação, maior a tendência de a rede prever aquela palavra.
+&emsp;Quanto maior a pontuação, maior a tendência de a rede prever aquela palavra.
 
-Mas precisamos transformar essas pontuações em probabilidades.
+&emsp;Mas precisamos transformar essas pontuações em probabilidades.
 
-Para isso, usamos a função Softmax:
+&emsp;Para isso, usamos a função Softmax:
 
 \[P_j=\frac{e^{s_j}}{\sum_k e^{s_k}}\]
 
-O que ela faz?
+&emsp;O que ela faz?
+
 1. Recebe as pontuações.
 2. Aplica a exponencial em cada uma.
 3. Divide cada resultado pela soma das exponenciais.
-O resultado é uma distribuição de probabilidades.
 
-Todas as probabilidades somadas precisam dar 1 (ou aproximadamente 1, devido ao arredondamento).
+&emsp;O resultado é uma distribuição de probabilidades.
 
-Exemplo:
+&emsp;Todas as probabilidades somadas precisam dar 1 (ou aproximadamente 1, devido ao arredondamento).
+
+&emsp;Exemplo:
 
 | Palavra | Probabilidade |
 | :--- | :--- |
@@ -592,33 +646,33 @@ Exemplo:
 | xurupa | 0,15 |
 | Total | 1,00 |
 
-Isso significa que, para aquela entrada, a rede está apostando mais em café.
+&emsp;Isso significa que, para aquela entrada, a rede está apostando mais em café.
 
-Mas, se o par de treinamento for café → quente, queremos que a probabilidade de quente aumente.
+&emsp;Mas, se o par de treinamento for café → quente, queremos que a probabilidade de quente aumente.
 
-É aí que entra o erro e a correção dos pesos.
+&emsp;É aí que entra o erro e a correção dos pesos.
 
-#### Insigths exercícios
+**Insights dos exercícios**
 
-época é uma passagem completa pelo conjunto de exemplos de treinamento.
+&emsp;Época é uma passagem completa pelo conjunto de exemplos de treinamento.
 
-embedding de cada palavra é seu vetor na W_in depois do treinamento.
+&emsp;Embedding de cada palavra é seu vetor na W_in depois do treinamento.
 
-#### Skip-gram
+**Skip-gram**
 
-arquitetura de receber uma palavra e tentar prever as palavras ao redor dela.
+&emsp;Arquitetura de receber uma palavra e tentar prever as palavras ao redor dela.
 
-Exemplo:
+&emsp;Exemplo:
 
-"bebi um café quente"
+&emsp;"bebi um café quente"
 
-Se a entrada for café, a rede tenta prever palavras como "um" e "quente", considerando a janela de contexto.
+&emsp;Se a entrada for café, a rede tenta prever palavras como "um" e "quente", considerando a janela de contexto.
 
 ```mermaid
 graph TD
     classDef main fill:#0D1117,stroke:#30363D,stroke-width:1px,color:white;
     classDef context fill:#01241C,stroke:#033A2E,stroke-width:1px,color:white;
-    
+
     A["<b>Palavra central</b><br>café"]:::main
     B{"Rede neural"}
     C["<b>Contexto</b><br>um"]:::context
@@ -629,39 +683,39 @@ graph TD
     B --> D
 ```
 
-#### CBOW (Continuous Bag of Words)
+**CBOW (Continuous Bag of Words)**
 
-Aqui acontece o contrário:
+&emsp;Aqui acontece o contrário:
 
-A rede recebe as palavras do contexto e tenta prever a palavra central.
+&emsp;A rede recebe as palavras do contexto e tenta prever a palavra central.
 
-Exemplo:
+&emsp;Exemplo:
 
-"bebi um ___ quente"
+&emsp;"bebi um ___ quente"
 
-O modelo recebe o contexto e tenta descobrir que a palavra central é café.
+&emsp;O modelo recebe o contexto e tenta descobrir que a palavra central é café.
 
 ```mermaid
 graph TD
     classDef context fill:#0D1117,stroke:#30363D,stroke-width:1px,color:white;
     classDef main fill:#01241C,stroke:#033A2E,stroke-width:1px,color:white;
-    
+
     A["<b>Contexto</b><br>bebi"]:::context
     B["<b>Contexto</b><br>um"]:::context
     C["<b>Contexto</b><br>quente"]:::context
-    
+
     D{"Rede neural"}
-    
+
     E["<b>Palavra prevista</b><br>café"]:::main
 
     A --> D
     B --> D
     C --> D
-    
+
     D --> E
 ```
 
-Diferenças: 
+&emsp;Diferenças:
 
 | Skip-gram | CBOW |
 | :--- | :--- |
@@ -669,11 +723,11 @@ Diferenças:
 | Saída: palavras vizinhas | Saída: palavra central |
 | Palavra → contexto | Contexto → palavra |
 
-Semelhanças: ambos aprendem embeddings a partir das relações entre palavras.
+&emsp;Semelhanças: ambos aprendem embeddings a partir das relações entre palavras.
 
-# Comparação: TF-IDF versus Word2Vec
+## Comparação: TF-IDF versus Word2Vec
 
-Essa comparação é muito importante porque os dois assuntos têm objetivos relacionados, mas não são a mesma coisa.
+&emsp;Essa comparação é muito importante porque os dois assuntos têm objetivos relacionados, mas não são a mesma coisa.
 
 | Característica | TF-IDF | Word2Vec |
 | :--- | :--- | :--- |
@@ -685,21 +739,27 @@ Essa comparação é muito importante porque os dois assuntos têm objetivos rel
 | Palavra fora do vocabulário | Não possui representação | Também não possui embedding aprendido |
 | Exemplo de uso | Busca de documentos | Similaridade entre palavras |
 
-Vamos imaginar que temos:
+&emsp;Vamos imaginar que temos:
+
 - "Eu gosto de café."
 - "Eu gosto de chá."
 
 **Com TF-IDF:**
-O computador calcula o peso das palavras em cada documento.
-Ele pode identificar quais palavras ajudam a diferenciar as frases.
+
+&emsp;O computador calcula o peso das palavras em cada documento.
+
+&emsp;Ele pode identificar quais palavras ajudam a diferenciar as frases.
 
 **Com Word2Vec:**
-O computador aprende que café e chá aparecem em contextos semelhantes.
-Por isso, seus embeddings podem ficar próximos.
+
+&emsp;O computador aprende que café e chá aparecem em contextos semelhantes.
+
+&emsp;Por isso, seus embeddings podem ficar próximos.
 
 **Uma diferença muito importante:**
 
-No TF-IDF, cada documento recebe um vetor de pesos das palavras.
-No Word2Vec, cada palavra recebe um vetor aprendido.
+&emsp;No TF-IDF, cada documento recebe um vetor de pesos das palavras.
 
-É possível combinar as duas técnicas, mas elas não são intercambiáveis.
+&emsp;No Word2Vec, cada palavra recebe um vetor aprendido.
+
+&emsp;É possível combinar as duas técnicas, mas elas não são intercambiáveis.
