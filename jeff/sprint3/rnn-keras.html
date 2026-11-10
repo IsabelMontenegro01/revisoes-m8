@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revisão de RNN</title>
+<style>
+/* Atividade em páginas A4: montar a rede (arrastar camadas), parâmetros, Colab sem volta e interpretação de resultados gravados.
+   A versão do aluno sai de ../../../_atividades/versao_aluno.py; os números saem de ../ferramentas/atividades-keras/. */
+:root{--ink:#1f2023;--muted:#6b6f76;--line:#bfc1c7;--soft:#f3f3f5;--brand:#e98a00;--ans:#d11a1a;--paper:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:#e9e9ed;color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:10px 16px;background:var(--paper);border-bottom:1px solid var(--line);font-size:14px}
+button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:5px 12px;cursor:pointer;color:var(--ink)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.bar .dica{color:var(--muted);font-size:13px;max-width:70ch}
+.page{width:210mm;max-width:calc(100% - 24px);min-height:297mm;margin:16px auto;background:var(--paper);padding:9mm 13mm;box-shadow:0 2px 14px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:3mm;position:relative}
+.page>.mostra{position:absolute;top:8px;right:10px}
+.page>.mostra button{font-size:12px;padding:3px 9px}
+@page{size:A4 portrait;margin:0}
+@media print{body{background:none}.bar,.mostra,.copiar{display:none!important}.page{margin:0;box-shadow:none;max-width:none;height:auto;min-height:0;overflow:visible;break-after:page}.page:last-child{break-after:auto}}
+.cab{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:3mm}
+.cab .sub{font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.cab .grupo{font-size:13px;white-space:nowrap}.cab .grupo span{display:inline-block;border-bottom:1px solid var(--ink);width:38mm;height:15px}
+h1{margin:2px 0 0;font-size:24px;font-weight:900;letter-spacing:-.01em}
+h2{margin:0;font-size:16px;font-weight:800;display:flex;gap:8px;align-items:center}
+h2 .n{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:13px;flex:none}
+p{margin:0}
+.exemplo{border:2px solid var(--ink);border-radius:12px;padding:2mm 4mm;display:grid;gap:1.5mm;background:#fcfcfc}
+.exemplo .tag{display:inline-block;background:var(--ink);color:var(--paper);border-radius:6px;padding:1px 8px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--line);padding:2px 4px;height:7.2mm;text-align:center;font-size:14px}
+th{background:var(--soft);font-size:12px;font-weight:700;height:auto;padding:4px 3px}
+td.dado{background:#fafafa;font-weight:600}
+td.eco{background:#fafafa;color:var(--muted);font-weight:600}
+th.esq,td.esq{text-align:left}
+.ans{color:var(--ans);font-weight:800;font-family:"Comic Sans MS","Segoe Print","Bradley Hand",cursive}
+.page:not(.resp) .ans{visibility:hidden}
+.linhas{display:grid;gap:7mm;padding-top:3mm}.linhas i{display:block;border-bottom:1px solid var(--line)}
+.destaque{border-left:5px solid var(--brand);background:var(--soft);border-radius:0 10px 10px 0;padding:2mm 4mm}
+.nome{border:2px solid var(--ink);border-radius:12px;padding:2mm 4mm;display:grid;gap:1mm}
+.nota{font-size:12.5px;color:var(--muted)}
+.duas{display:grid;grid-template-columns:1fr 1fr;gap:5mm;align-items:start}
+.formula{font-family:"STIX Two Text","Cambria Math",Cambria,"Times New Roman",serif;font-size:18px;text-align:center}
+.frases{display:grid;gap:.5mm;font:600 14px ui-monospace,Menlo,Consolas,monospace}
+.frases span b{color:var(--brand)}
+.comp th,.comp td{height:6mm;padding:1px 3px;font-size:13px}
+.rot{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:1mm}
+code,pre.cod,pre.saida{font-family:ui-monospace,Menlo,Consolas,monospace}
+code{font-size:.92em;background:var(--soft);border-radius:4px;padding:0 3px}
+pre.cod,pre.saida{margin:0;font-size:12.5px;line-height:1.42;border-radius:8px;padding:2.5mm 3mm;white-space:pre-wrap;overflow-wrap:anywhere}
+pre.cod{background:#f6f6f8;border:1px solid var(--line)}
+pre.saida{background:#23252a;color:#f1f1f3}
+pre.cod .ln{display:inline-block;width:1.8em;color:var(--muted);user-select:none}
+.bloco-copia{position:relative}
+.copiar{position:absolute;top:5px;right:6px;font-size:11.5px;padding:2px 8px}
+.linhas.cod{gap:5.4mm}
+.linhas.cod textarea.campo{font:13px/1.42 ui-monospace,Menlo,Consolas,monospace;min-height:58mm;white-space:pre;overflow-x:auto}
+.linhas.cod.curta textarea.campo{min-height:34mm}
+.armada{width:auto;border-collapse:collapse;justify-self:start}
+.armada th,.armada td{border:none;height:auto;padding:1px 10px;font-size:14px;text-align:left;font-variant-numeric:tabular-nums}
+.armada th{background:none;font-size:12px;color:var(--muted)}
+.fluxo{display:flex;align-items:stretch;gap:2mm}
+.fluxo div{flex:1;border:1.5px solid var(--ink);border-radius:8px;padding:1.5mm 2mm;text-align:center;font-size:13px;display:grid;align-content:center}
+.fluxo div b{font-size:13.5px}
+.fluxo .seta{flex:none;border:0;padding:0;font-size:18px;color:var(--muted);align-content:center}
+.quadro th.esq{width:60mm;font-size:13px;background:var(--soft)}
+.quadro td{height:8.4mm}
+ol.passos{margin:0;padding-left:20px;display:grid;gap:1.5mm}
+@media screen and (max-width:640px){.duas{grid-template-columns:1fr}.page{padding:8mm 6mm}.fluxo{flex-direction:column}.fluxo .seta{transform:rotate(90deg);align-self:center}.quadro th.esq{width:42mm}}
+/* cores de rastreio: o mesmo número, ou a mesma ideia, tem a mesma cor em todo lugar da página */
+:root{--c1:#1d5fc4;--c1-bg:#e6effc;--c2:#b85600;--c2-bg:#fdeedd;--c3:#0f7a4f;--c3-bg:#e1f5ec;--c4:#7a3fb5;--c4-bg:#f1e9fb}
+.c1,.c2,.c3,.c4{border-radius:4px;padding:0 3px;font-weight:700}
+.c1{color:var(--c1);background:var(--c1-bg)}.c2{color:var(--c2);background:var(--c2-bg)}.c3{color:var(--c3);background:var(--c3-bg)}.c4{color:var(--c4);background:var(--c4-bg)}
+.saida .c1{color:#cfe0ff;background:#27426f}.saida .c2{color:#ffd9a8;background:#5b3a10}.saida .c3{color:#b6f0d5;background:#14503a}
+/* sintaxe do código */
+.sx-k{color:#8250df;font-weight:600}.sx-s{color:#0a7d55}.sx-n{color:#b85600}.sx-f{color:#1d5fc4}.sx-c{color:#6b6f76;font-style:italic}
+.c1 .sx-n,.c2 .sx-n,.c3 .sx-n,.c4 .sx-n{color:inherit}
+td.certo{background:#e1f5ec;color:#0f7a4f;font-weight:700}
+td.errou{background:#fde8e8;color:#b42318;font-weight:700}
+.bar-h{display:block;height:5px;background:var(--c1);border-radius:3px;margin-top:2px}
+.bar-h.neg{background:var(--c2)}
+.pecas th.esq{width:48mm;font-size:12.5px}.pecas td{font-size:13.5px;height:auto;padding:3px 6px}
+.frases-tab td{font:600 14px ui-monospace,Menlo,Consolas,monospace}
+@media print{*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+.prof{display:none}
+body.prof-on .prof{display:flex}
+.prof ul{margin:0;padding-left:20px;display:grid;gap:3px}
+
+/* montar a rede */
+.mont{display:grid;grid-template-columns:50mm 1fr;gap:5mm;align-items:start}
+.paleta{display:grid;gap:2mm}
+.peca{display:flex;align-items:center;gap:8px;border:1.5px solid var(--ink);border-radius:8px;padding:2mm 3mm;font-weight:800;background:var(--paper);cursor:grab;text-align:left;font-size:14px;box-shadow:0 3px 0 var(--ink);transition:transform .1s,box-shadow .1s,border-color .1s}
+.peca:hover{transform:translateY(-2px);box-shadow:0 5px 0 var(--brand);border-color:var(--brand)}
+.peca:active{cursor:grabbing;transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.grip{flex:none;width:10px;height:18px;background-image:radial-gradient(circle,var(--muted) 1.4px,transparent 1.5px);background-size:5px 6px}
+.camada .grip{height:15px}
+.camada[draggable=true]:hover{border-color:var(--brand)}
+.camada[draggable=true]:active{cursor:grabbing}
+.vazia{border:2px dashed var(--brand);border-radius:8px;color:var(--brand);font-weight:700;text-align:center;padding:9mm 3mm;font-size:15px}
+body.arrastando .pilha{border:2px dashed var(--brand);background:#fff8ee}
+.peca small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.missoes{margin:0;padding:0;list-style:none;display:grid;gap:1.5mm;font-size:13px}
+.missoes li{border-left:4px solid var(--line);padding:1mm 2.5mm}
+.missoes li.feita{border-color:var(--c3);background:var(--c3-bg)}
+.missoes pre{margin:1mm 0 0;font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;color:var(--ink)}
+.erros-vistos{font-size:12px;color:var(--muted)}
+.pilha{display:grid;gap:0;align-content:start;min-height:60mm;border:1.5px dashed var(--line);border-radius:10px;padding:2.5mm;position:relative;background:#fbfbfc}
+.pilha.ok{border:2px solid var(--c3);background:#f3fbf7}
+.camada{border:1.5px solid var(--ink);border-radius:8px;padding:1.6mm 2.5mm;background:var(--paper);position:relative;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13.5px}
+.camada[draggable=true]{cursor:grab}
+.camada .nm{font-weight:800}
+.camada.fixa{background:var(--soft);border-style:solid}
+.camada select{font:inherit;border:1px solid var(--line);border-radius:5px;padding:1px 2px;background:var(--paper)}
+.camada .acoes{margin-left:auto;display:flex;gap:3px}
+.camada .acoes button{padding:0 7px;font-size:13px;line-height:1.5}
+.camada.erro{border-color:#c62828;background:#fdecec}
+.camada.apagada{opacity:.45}
+.sw{display:inline-flex;align-items:center;gap:5px;font:12.5px ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:999px;padding:1px 8px 1px 3px;background:var(--paper);cursor:pointer}
+.sw i{width:22px;height:13px;border-radius:999px;background:var(--line);position:relative;display:inline-block}
+.sw i::after{content:"";position:absolute;top:1.5px;left:1.5px;width:10px;height:10px;border-radius:50%;background:#fff;transition:left .12s}
+.sw[aria-checked=true]{border-color:var(--c4)}.sw[aria-checked=true] i{background:var(--c4)}.sw[aria-checked=true] i::after{left:10.5px}
+.sinal{background:#c62828;color:#fff;border-color:#c62828;border-radius:50%;width:22px;height:22px;padding:0;font-weight:900;line-height:1}
+.pop{display:none;position:absolute;z-index:20;left:8px;right:8px;top:calc(100% + 4px);background:#fff;border:2px solid #c62828;border-radius:8px;padding:2mm 3mm;box-shadow:0 4px 14px rgba(0,0,0,.2);font-size:13px;line-height:1.4}
+.pop.on{display:block}.pop b{display:block;color:#c62828;margin-bottom:.5mm}
+.liga{display:flex;align-items:center;gap:8px;padding:1.2mm 0 1.2mm 5mm;min-height:7mm;font:12.5px ui-monospace,Menlo,Consolas,monospace;color:var(--muted)}
+.tn{display:inline-grid;gap:1px;vertical-align:middle}
+.tn i{width:6px;height:6px;border-radius:1px;display:block}
+.alvo{height:0;border-top:4px solid var(--brand);border-radius:2px;margin:1px 0}
+.status{font-weight:700;font-size:14px;padding:1.6mm 3mm;border-radius:8px;background:var(--soft)}
+.status.ok{background:var(--c3-bg);color:var(--c3)}.status.erro{background:#fdecec;color:#c62828}
+.corda{display:flex;align-items:center;gap:2mm;flex-wrap:wrap;font:600 13px ui-monospace,Menlo,Consolas,monospace}
+.corda .cel{border:1.5px solid var(--c4);background:var(--c4-bg);color:var(--c4);border-radius:7px;padding:2mm 3mm;display:grid;justify-items:center;gap:1mm}
+.corda .cel small{font:600 11.5px system-ui;color:var(--ink)}
+.corda .h{color:var(--muted);font-size:15px}
+.vis-so{font-size:12.5px;color:var(--muted)}
+@media screen and (max-width:640px){.mont{grid-template-columns:1fr}.paleta{grid-template-columns:repeat(3,1fr)}}
+@media print{.grip,.vazia,#codigo,.so-tela,.rot-paleta,.paleta .peca,.camada .acoes,.sinal{display:none!important}.camada select,.sw{border:none}.pilha{min-height:0}}
+/* mediação: gráficos, contagem de seeds e tipo de vermelho */
+.graf{display:block;width:100%;height:auto}
+.g-grade{stroke:#e7e8ec;stroke-width:1}
+.g-ref{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 3}
+.g-eixo{font:11px system-ui,sans-serif;fill:var(--muted)}
+.g-forte{font-weight:800;fill:var(--ink)}
+.g-linha{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.g-ponto{stroke:#fff;stroke-width:2}
+.g-valor{font:700 11.5px system-ui,sans-serif;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:3px}
+.g-leg{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;margin-bottom:1mm}
+.g-leg span{display:inline-flex;align-items:center;gap:5px}.g-leg i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.pts{display:inline-flex;align-items:center;gap:3px}
+.pts i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--c3);display:inline-block}
+.pts i.on{background:var(--c3)}.pts b{margin-left:3px;font-size:13px}
+tr.foco th,tr.foco td{background:#fff3df}
+.pop .tipo{display:block;font-weight:700;font-size:12px;color:var(--muted);margin-bottom:.8mm}
+.diag{display:grid;grid-template-columns:24mm 1fr;gap:.6mm 3mm;font-size:13.5px}.diag b{color:var(--muted);font-size:12.5px}
+.ret th,.ret td{height:auto;padding:3px 5px;font-size:12.5px}
+ol.leitura{margin:0;padding-left:20px;display:grid;gap:.8mm;font-size:13.5px}
+/* levantamento da LSTM: estrutura da frase, leitura e controles */
+.bl{border:1.5px dashed var(--muted);border-radius:5px;padding:0 4px}
+.estr{display:flex;flex-wrap:wrap;gap:1.5mm;font:600 13px ui-monospace,Menlo,Consolas,monospace}
+.estr>span{border:1.5px solid var(--line);border-radius:7px;padding:1mm 2.5mm}
+.estr>.bl{border:1.5px dashed var(--muted)}
+.vv{display:inline-flex;gap:1px;vertical-align:middle}.vv i{width:9px;height:12px;border-radius:2px;display:block}
+.tle th,.tle td{height:auto;padding:3px 2px;font-size:12.5px}.tle th.esq{width:12mm}
+.tle td.sai{outline:2px solid var(--c3);outline-offset:-2px;background:var(--c3-bg)}
+.tle th.atual{background:#fff3df}
+@media screen{.futuro{visibility:hidden}}
+.linha-bt{display:flex;flex-wrap:wrap;gap:2mm;align-items:center}
+.explor{display:grid;gap:1.5mm;border:1.5px solid var(--line);border-radius:10px;padding:2mm 3mm}.explor input{width:100%}
+.explor table td,.explor table th{height:auto;padding:2px 4px;font-size:13px}
+th.col-on,td.col-on{outline:2px solid var(--brand);outline-offset:-2px}
+.g-marca{stroke:var(--brand);stroke-width:1.5;stroke-dasharray:3 2}
+.orig{display:block;font-weight:500;font-size:10.5px;color:var(--muted);white-space:normal}
+tr.ex-linha th{background:#fff3df}
+.liga .sig{color:var(--ink);font:12.5px system-ui,sans-serif}
+.dv-s{display:grid;gap:1.5mm;font-size:13.5px}.dv-s>div{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.dv-s .rot-s{font-weight:800;min-width:30mm}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--brand);outline-offset:1px}
+.tparam td{min-width:12mm;white-space:nowrap}
+.tparam th.esq{width:40mm}
+</style>
+<style>
+/* Versão do aluno, preenchida na tela (computador ou celular) e baixada em PDF. Embutida por
+   versao_aluno.py depois dos estilos da própria atividade. */
+.bar .estado{color:var(--muted);font-size:13px;flex-basis:100%;text-align:center}
+.bar .estado:empty{display:none}
+.bar .pdf{font-size:15px;padding:7px 18px;background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.campo{font:inherit;font-size:16px;font-weight:700;color:var(--ink);background:#fffbea;border:1px solid var(--line);border-radius:6px;padding:2px 4px;text-align:center;width:100%;min-width:2.4em}
+.campo:focus{outline:2px solid var(--brand);outline-offset:0;background:#fff}
+.campo.falta{outline:3px solid var(--ans);outline-offset:1px}
+.caixa:has(.campo){place-items:stretch;padding:0}
+.caixa .campo{border:0;border-radius:5px;height:100%}
+td:has(>.campo){padding:2px}
+td .campo{height:100%;min-height:30px;min-width:2.4em}
+textarea.campo{text-align:left;font-weight:500;line-height:1.45;padding:6px 8px;resize:vertical;min-height:4.4em;display:block}
+.linhas:has(textarea){gap:2mm;padding-top:2mm}
+.cab .grupo{display:flex;align-items:center;gap:6px}
+.cab .grupo .campo{width:42mm;text-align:left}
+.cab .grupo span{width:auto;min-width:38mm;padding:0 4px;font-weight:700;border-bottom:1px solid var(--ink)}
+.rola{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.impresso{display:none}
+@media screen and (max-width:640px){
+  .page{min-height:0}
+  .bar{gap:6px;padding:8px}
+  .rola table{min-width:560px}
+  .caixa{min-width:20mm}
+}
+@media print{
+  .page{height:auto!important;min-height:0!important;overflow:visible!important}
+  .rola{overflow:visible}
+  .campo{background:none!important;border-color:transparent!important;font-size:13px}
+  input.campo{display:none!important}
+  .impresso{display:inline;font-weight:700;font-size:13px;white-space:normal;overflow-wrap:anywhere}
+  .caixa:has(.campo){height:auto;min-height:7mm;place-items:center;padding:1px 5px}
+  td .campo{min-height:0}
+  .cab .grupo .campo{border-bottom:1px solid var(--ink)!important;border-radius:0}
+  textarea.campo{resize:none;border:0;padding:0;min-height:2.6em;line-height:1.3;font-size:12.5px}
+  .page{gap:2.4mm;padding-top:8mm;padding-bottom:6mm}
+  .linhas:has(textarea){padding-top:0}
+  /* atividades com registro (a ponderada) são mais densas: um corpo menor para cada página caber numa folha */
+  body[data-registro] .page{font-size:12.5px;gap:2mm;padding:7mm 12mm 5mm}
+  body[data-registro] th,body[data-registro] td{font-size:12px;height:auto;padding:1px 3px}
+  body[data-registro] h1{font-size:21px}
+  body[data-registro] h2{font-size:14.5px}
+  body[data-registro] .caixa:has(.campo){min-height:6mm}
+}
+</style>
+</head>
+<body>
+<div class="bar">
+</div>
+
+<!-- 1 · A TAREFA -->
+<section class="page" id="p1">
+  <div class="cab"><div><div class="sub">EC08 · encontro 3 · Revisão de RNN · 1 de 12</div><h1>Revisão de RNN</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>Neste caderno você monta uma rede recorrente (RNN), conserta bugs em Keras no Colab e interpreta resultados de treino.</p>
+  <h2><span class="n">1</span>A tarefa</h2>
+  <p>A rede lê uma frase, palavra por palavra, e diz se ela é <b>positiva (1)</b> ou <b>negativa (0)</b>. As frases são artificiais, para que só uma coisa mude de uma para outra:</p>
+  <table class="frases-tab">
+    <tr><th class="esq">frase</th><th>resposta</th></tr>
+    <tr><td class="esq">o café já estava <span class="bl">hoje aqui</span> <span class="c1">bom</span></td><td class="dado">1</td></tr>
+    <tr><td class="esq">o café já estava <span class="bl">hoje aqui</span> <span class="c1">ruim</span></td><td class="dado">0</td></tr>
+    <tr><td class="esq">o café <span class="c2">não</span> estava <span class="bl">hoje aqui</span> <span class="c1">bom</span></td><td class="dado">0</td></tr>
+    <tr><td class="esq">o café <span class="c2">não</span> estava <span class="bl">hoje aqui</span> <span class="c1">ruim</span></td><td class="dado">1</td></tr>
+  </table>
+  <h2><span class="n">2</span>A dificuldade</h2>
+  <p>A resposta depende de duas palavras juntas: o <span class="c2">não</span> e o <span class="c1">adjetivo</span>. Quando o adjetivo chega, a rede não pode voltar para reler a frase. Ela só conta com o que guardou até ali.</p>
+  <h2><span class="n">3</span>Como as frases são feitas, e o que é <i>d</i></h2>
+  <p>Todas as frases do caderno seguem a mesma estrutura:</p>
+  <div class="estr"><span>o</span><span>café, chá ou pão</span><span class="c2">já ou não</span><span>estava</span><span class="bl">bloco de <b><i>d</i></b> palavras neutras</span><span class="c1">bom ou ruim</span></div>
+  <p><b><i>d</i> é a quantidade de palavras neutras do bloco.</b> “Estava” fica de fora porque faz parte da estrutura: está em toda frase, em qualquer valor de <i>d</i>. O bloco é a parte que muda de tamanho. Nas quatro frases acima ele é <span class="bl">hoje aqui</span>, então <i>d</i> = 2.</p>
+  <p>O bloco é igual nas quatro frases de propósito: assim, só mudam o já/não e o adjetivo, e dá para comparar as combinações.</p>
+  <table class="comp">
+    <tr><th class="esq">o que contar</th><th class="esq">nas frases acima (<i>d</i> = 2)</th><th class="esq">regra</th></tr>
+    <tr><th class="esq">palavras na frase</th><td class="esq">7: as 5 posições fora do bloco, mais 2</td><td class="esq"><i>d</i> + 5</td></tr>
+    <tr><th class="esq">palavras entre o “não” e o adjetivo</th><td class="esq">3: estava, hoje, aqui</td><td class="esq"><i>d</i> + 1</td></tr>
+  </table>
+  <p class="nota">Quando o caderno fala em “frases mais longas”, é <i>d</i> maior. Com <i>d</i> = 8, a frase tem 13 palavras.</p>
+</section>
+
+<!-- 2 · LER -->
+<section class="page" id="p2">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 2 de 12</div><h1>Como a RNN lê uma frase</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>A RNN lê uma palavra por vez e carrega um <b>estado</b>: um conjunto de números que ela reescreve a cada palavra. Cada estado novo mistura a palavra atual com o estado anterior. É a <b>mesma célula, com os mesmos pesos</b>, em todas as palavras:</p>
+  <div class="corda"><div class="cel">RNN<small>o</small></div><span class="h">→</span><div class="cel">RNN<small>café</small></div><span class="h">→</span><div class="cel">RNN<small><span class="c2">não</span></small></div><span class="h">→</span><div class="cel">RNN<small>estava</small></div><span class="h">→ … →</span><div class="cel">RNN<small><span class="c1">bom</span></small></div></div>
+  <p class="nota">Cada seta leva o estado para a palavra seguinte. O desenho mostra uma célula por palavra, mas é sempre a mesma.</p>
+  <h2>Acompanhe uma leitura</h2>
+  <p>Avance palavra por palavra. A rede é a RNN já treinada, lendo uma frase da página 1. Cada quadradinho é um número do estado: azul é positivo, laranja é negativo, e cor forte é valor grande. Mostramos 6 dos 16 números. Não é preciso interpretar esses valores: observe que o estado muda a cada palavra, e que a célula é sempre a mesma.</p>
+  <div class="so-tela linha-bt"><button type="button" id="le-prox">Próxima palavra</button><button type="button" id="le-zera">Recomeçar</button><span id="le-st" class="nota"></span></div>
+  <div id="le-tab"></div>
+</section>
+
+<!-- 3 · DEVOLVE -->
+<section class="page" id="p3">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 3 de 12</div><h1>O que a RNN devolve</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>Durante a leitura, a RNN sempre calcula o estado de todas as palavras. Uma chave escolhe o que sai da camada ao final. A chave não muda a leitura: muda só o que é entregue.</p>
+  <div class="exemplo"><div><span class="tag">Caso resolvido</span> &nbsp;<b>Uma resposta por frase, com uma Dense depois da RNN</b></div><p>A <code>Dense</code> precisa de um vetor por frase. Com a chave desligada, a camada entrega o último estado, um vetor por frase. É por isso que ela começa desligada.</p></div>
+  <div class="so-tela linha-bt"><button type="button" class="sw" role="switch" aria-checked="false" id="ch-seq"><i></i>return_sequences</button></div>
+  <div id="dv-tab" class="so-tela"></div>
+  <div id="dv-saida" class="so-tela"></div>
+  <div class="rot">agora é com você: ajuste a chave acima</div>
+  <ul class="missoes" id="desafios"></ul>
+  <div><div class="rot">resumo, em frases de 13 palavras e 16 unidades</div>
+  <table class="ret">
+    <tr><th>return_sequences</th><th class="esq">a camada devolve</th><th class="esq">para que serve</th></tr>
+    <tr><td>desligado</td><td class="esq">um vetor por frase: <code>(None, 16)</code>, o último estado</td><td class="esq">uma resposta por frase: a <code>Dense</code> lê esse vetor</td></tr>
+    <tr><td>ligado</td><td class="esq">um vetor por palavra: <code>(None, <span class="c1">13</span>, 16)</code>, o estado de cada palavra</td><td class="esq">alimentar outra RNN, que precisa de um vetor por palavra</td></tr>
+  </table>
+  <p class="nota">O último vetor da sequência é o mesmo que sai com a chave desligada.</p></div>
+</section>
+
+<!-- 4 · MONTAR -->
+<section class="page" id="p4">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 4 de 12</div><h1>Monte a rede</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>Arraste as camadas para a pilha, ou clique nelas. Cada camada mostra <b>o que sai dela</b>: o formato e um desenho dos números de uma frase. <b>(None, <span class="c1">13</span>, <span class="c3">8</span>)</b> quer dizer: um lote com qualquer quantidade de frases (<code>None</code>), <span class="c1">13</span> palavras em cada, <span class="c3">8</span> números por palavra. Em <b>vermelho</b>, o que não pode ser feito; passe o mouse no sinal para descobrir por quê.</p>
+  <p>A frase entra como <b>ids</b>: cada palavra do vocabulário tem um número fixo (o → 0, café → 1, não → 4). Aqui há <i>d</i> = 8 neutras, por isso são <span class="c1">13</span> palavras, e não as 7 do exemplo da página 1.</p>
+  <p class="nota"><b>dimensão</b>: quantos números representam cada palavra. <b>unidades</b>: quantos números a camada entrega. <b>ativação</b>: a função aplicada à saída da <code>Dense</code>; a <code>sigmoid</code> deixa o resultado entre 0 e 1.</p>
+  <div class="exemplo"><div><span class="tag">Caso resolvido</span> &nbsp;<b>SimpleRNN direto na entrada</b></div>
+    <div class="diag"><b>chegava</b><span>ids, um número por palavra: <code>(None, 13)</code>.</span><b>precisava</b><span>um vetor por palavra: <code>(None, 13, 8)</code>.</span><b>correção</b><span>colocar uma <code>Embedding</code> antes da SimpleRNN.</span><b>por que resolve</b><span>a <code>Embedding</code> troca cada id por um vetor, e a RNN passa a ter números para ler em cada palavra.</span></div></div>
+  <div class="mont">
+    <div>
+      <div class="rot rot-paleta">arraste para a pilha →</div>
+      <div class="paleta" id="paleta">
+        <button type="button" class="peca" draggable="true" data-t="E"><span class="grip" aria-hidden="true"></span><span>Embedding<small>troca ids por vetores</small></span></button>
+        <button type="button" class="peca" draggable="true" data-t="R"><span class="grip" aria-hidden="true"></span><span>SimpleRNN<small>lê em ordem, guarda estado</small></span></button>
+        <button type="button" class="peca" draggable="true" data-t="D"><span class="grip" aria-hidden="true"></span><span>Dense<small>combina números</small></span></button>
+      </div>
+      <div class="rot" style="margin-top:3mm">missões</div>
+      <ul class="missoes" id="missoes"></ul>
+      <p class="erros-vistos" id="vistos"></p>
+    </div>
+    <div>
+      <div class="rot">sua rede</div>
+      <div class="pilha" id="pilha"></div>
+      <div class="status" id="status" style="margin-top:2mm"></div>
+      <div class="rot so-tela" style="margin-top:3mm">o código desta rede</div>
+<pre class="cod" id="codigo"></pre>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · PARÂMETROS -->
+<section class="page" id="p5">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 5 de 12</div><h1>Quantos parâmetros tem a rede?</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p><b>Parâmetros</b> são os números que o treino ajusta. Eles dependem da arquitetura, e é uma conta que vale fazer: mostra o que custa cada escolha.</p>
+  <div class="exemplo">
+    <div><span class="tag">Exemplo resolvido</span> &nbsp;<b>Vocabulário de <span class="c2">20</span>, vetores de <span class="c3">4</span>, RNN de <span class="c4">8</span></b></div>
+    <table class="armada">
+      <tr><th>camada</th><th>de onde vêm os parâmetros</th><th>conta</th></tr>
+      <tr><td><code>Embedding(<span class="c2">20</span>, <span class="c3">4</span>)</code></td><td>um vetor de <span class="c3">4</span> para cada uma das <span class="c2">20</span> palavras</td><td><span class="c2">20</span> × <span class="c3">4</span> = <b>80</b></td></tr>
+      <tr><td><code>SimpleRNN(<span class="c4">8</span>)</code></td><td>entrada → estado, estado → estado, viés</td><td><span class="c3">4</span> × <span class="c4">8</span> + <span class="c4">8</span> × <span class="c4">8</span> + <span class="c4">8</span> = 32 + 64 + 8 = <b>104</b></td></tr>
+      <tr><td><code>Dense(1)</code></td><td>um peso para cada número do estado, mais o viés</td><td><span class="c4">8</span> + 1 = <b>9</b></td></tr>
+    </table>
+  </div>
+  <h2><span class="n">4</span>Sua vez</h2>
+  <p>Vocabulário de <span class="c2">15</span>, vetores de <span class="c3">8</span>. A primeira linha é a rede da tarefa, com frases de 13 palavras, já preenchida para mostrar de onde vem cada número. Na segunda, complete o que falta. A terceira é sua.</p>
+  <div id="tab-param"></div>
+  <div class="destaque"><b>Por que o comprimento da frase não entra na conta? O que isso diz sobre os pesos da RNN?</b><div class="linhas"><i></i><i></i></div></div>
+</section>
+
+<!-- 6 · COLAB -->
+<section class="page" id="p6">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 6 de 12</div><h1>Agora, no Colab</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>O notebook leva você por cada parte do código: construir a rede camada por camada, ver o que muda nos parâmetros, treinar, consertar três bugs e comparar opções.</p>
+  <ol class="passos"><li>Baixe o <b><a href="rnn-keras-colab.ipynb" download>rnn-keras-colab.ipynb</a></b>.</li><li>No Colab, abra <b>Arquivo → Fazer upload de notebook</b> e escolha o arquivo.</li><li>Rode uma célula de cada vez. Algumas dão erro de propósito.</li></ol>
+  <p><b>Não é preciso anotar nada aqui.</b> Quando terminar o notebook, siga para a próxima página. Os números do seu Colab podem ser diferentes dos que aparecem nas próximas páginas; responda usando os números da folha.</p>
+  <h2><span class="n">5</span>Dois processos que o notebook usa</h2>
+  <p>A rede muda de dois jeitos. Ao <span class="c1">ler</span> uma frase, muda o estado. Ao <span class="c2">treinar</span>, mudam os parâmetros.</p>
+  <table>
+    <tr><th class="esq"></th><th><span class="c1">Ler</span></th><th><span class="c2">Treinar</span></th></tr>
+    <tr><th class="esq">o que muda</th><td>o estado</td><td>os parâmetros (pesos)</td></tr>
+    <tr><th class="esq">quando</th><td>a cada palavra</td><td>depois de cada lote de frases</td></tr>
+    <tr><th class="esq">o que sobra depois</th><td>nada: cada frase nova começa com o estado zerado</td><td>os pesos ajustados, usados em todas as frases seguintes</td></tr>
+  </table>
+  <p>Uma <b>época</b> é uma passada por todas as frases de treino. As frases se dividem em <b>treino</b> (ajusta os pesos), <b>validação</b> (acompanha o acerto sem ajustar nada) e <b>teste</b> (fica guardado para o fim). As <b>sondas</b> são quatro frases escolhidas para ver o que a rede faz em cada caso.</p>
+</section>
+
+<!-- 7 · SONDAS -->
+<section class="page" id="p7">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 7 de 12</div><h1>O que a rede está fazendo?</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>As próximas páginas usam resultados reais, já gravados: o modelo treinado com <i>d</i> = 8, com 3000 frases de treino e 1000 de validação, por 40 épocas. A seed é a mesma do notebook.</p>
+  <div><div class="rot">acerto na validação, por época; a linha tracejada é 0,50, e os pontos são as épocas da tabela abaixo</div><div id="tab-val"></div></div>
+  <p>Em cada época, a rede dá a probabilidade P de cada sonda ser positiva. Se P passa de 0,5, a resposta é 1. No gráfico, a horizontal é a época e a vertical é o acerto nas 1000 frases de validação.</p>
+  <ol class="leitura so-tela"><li>Deixe o controle na época 1 e avance até a 13. O acerto sai de perto de 0,50? As P das quatro sondas se afastam de 0,5?</li><li>Passe para a época 14. Veja o que acontece no gráfico e na coluna da época 14 da tabela.</li></ol>
+  <div class="so-tela explor"><label for="ep-sl">época <b id="ep-n"></b></label><input type="range" id="ep-sl" min="1" max="40" value="13" step="1"><div id="ep-p"></div></div>
+  <div class="exemplo"><div><span class="tag">Como ler a tabela</span></div><p>Na linha “já … bom”, na época 5: P = <span class="c1">0,48</span>, abaixo de 0,5, então a resposta é <span class="c2">0</span>. Queremos <span class="c3">1</span>: errou. Em verde, as respostas certas; em vermelho, as erradas.</p></div>
+  <div id="tab-frases"></div>
+  <div class="destaque"><b>1. Quantas frases entram no acerto de validação? E nas sondas?<br>2. Compare as sondas das épocas 13 e 14. Qual mudou de lado? O que isso sugere sobre o uso do “não”? Cite os valores de P. Uma resposta curta basta.</b><div class="linhas"><i></i><i></i><i></i><i></i></div></div>
+</section>
+
+<!-- 8 · ESTADO -->
+<section class="page" id="p8">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 8 de 12 · aprofundamento</div><h1>O que há dentro do estado?</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>Na página 7, olhamos só a saída. Agora olhamos o estado. Lemos “o café já estava … bom” e “o café não estava … bom” com a mesma rede e medimos <span class="c2">a distância entre os dois estados</span>, tratando os 16 números como um ponto. Zero quer dizer estados iguais; o máximo é 8. Não existe um valor a partir do qual a marca “basta”: o que importa é comparar as linhas.</p>
+  <p><b>Guardar e usar são coisas diferentes.</b> O estado pode carregar o “não” e isso quase não afetar a saída. Distância grande não quer dizer classificação melhor: só que as duas leituras ficaram diferentes.</p>
+  <p class="nota">Esta página é de aprofundamento: faz parte da entrega, mas olha dentro da célula. Se travar, siga para a página 9 e volte depois.</p>
+  <ol class="leitura so-tela"><li>Mova o controle pelas palavras. Em que palavra as duas leituras deixam de ser iguais?</li><li>Do “não” até a última palavra, compare a época 5 com a época 14: a distância cresce ou fica quase igual?</li></ol>
+  <div class="so-tela explor"><label for="pa-sl">palavra <b id="pa-n"></b></label><input type="range" id="pa-sl" min="0" max="12" value="2" step="1"><div id="pa-v"></div></div>
+  <div><div class="rot">distância entre os estados das leituras “já” e “não”, palavra por palavra; cada linha é uma época</div><div id="g-dist"></div></div>
+  <table class="comp">
+    <tr><th class="esq">momento</th><th>acerto de validação</th><th>P(já … bom)</th><th>P(não … bom)</th><th><span class="c2">distância</span> na última palavra</th></tr>
+    <tr><th class="esq">antes de treinar</th><td class="dado">não medido</td><td class="dado">0,545</td><td class="dado">0,536</td><td class="dado">0,11</td></tr>
+    <tr><th class="esq">época 5</th><td class="dado">0,50</td><td class="dado">0,482</td><td class="dado">0,476</td><td class="dado">0,09</td></tr>
+    <tr><th class="esq">época 10</th><td class="dado">0,49</td><td class="dado">0,494</td><td class="dado">0,489</td><td class="dado">0,14</td></tr>
+    <tr><th class="esq">época 13</th><td class="dado">0,67</td><td class="dado">0,526</td><td class="dado">0,547</td><td class="dado">1,47</td></tr>
+    <tr><th class="esq">época 14</th><td class="dado">1,00</td><td class="dado">0,777</td><td class="dado">0,264</td><td class="dado">3,05</td></tr>
+    <tr><th class="esq">época 40</th><td class="dado">1,00</td><td class="dado">0,999</td><td class="dado">0,001</td><td class="dado">5,42</td></tr>
+  </table>
+  <div class="destaque"><b>O acerto perto de 0,50 nas épocas 5 e 10 permite dizer o quê? O que ele não permite dizer? Cite as P e a distância dessas épocas. Uma resposta curta basta.</b><div class="linhas"><i></i><i></i><i></i></div></div>
+</section>
+
+<!-- 9 · SEEDS -->
+<section class="page" id="p9">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 9 de 12</div><h1>Aprendeu, ou ainda não?</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>A <b>seed</b> é o número que fixa o sorteio dos pesos iniciais e a ordem de embaralhamento. Mudando só a seed, as frases e o modelo continuam os mesmos, e o treino começa de outro ponto.</p>
+  <p>Aqui, <b>aprendeu</b> quer dizer: atingiu 0,95 de acerto de validação em até 40 épocas. Não atingir nessas 40 épocas não prova que a rede nunca aprenderia. E o 0,95 é um critério escolhido para este experimento.</p>
+  <p>A matriz que liga o estado anterior ao novo tem 16 × 16 números. A <b>inicialização</b> (<code>recurrent_initializer</code>) é o valor de partida dela, antes do treino. Ao multiplicar o estado por essa matriz, a <b>ortogonal</b>, padrão do Keras, não encolhe nem estica nenhuma direção; a <b>glorot</b> encolhe algumas e estica outras. Isso vale só para a multiplicação pela matriz inicial, antes de somar a entrada e aplicar a tanh, e o treino altera a matriz depois.</p>
+  <p>Treinamos as duas inicializações, em 4 seeds para cada <i>d</i>. Na tabela, cada número é a <b>primeira época</b> que atingiu 0,95: menor quer dizer que atingiu antes, e × quer dizer que não atingiu em 40 épocas.</p>
+  <div class="so-tela linha-bt" id="d-bts"></div>
+  <div id="tab-seed"></div>
+  <div class="exemplo"><div><span class="tag">Exemplo resolvido</span> &nbsp;<b><i>d</i> = 15: ortogonal contra glorot</b></div>
+    <ol class="leitura"><li>Quantos treinos atingiram 0,95? Ortogonal: <span class="c3">4 de 4</span>. Glorot: <span class="c3">4 de 4</span>.</li><li>Entre os que atingiram, em que época? Ortogonal: <span class="c1">18 a 25</span>. Glorot: <span class="c2">8 a 17</span>.</li><li>Conclusão: em <i>d</i> = 15, a glorot atingiu 0,95 antes nas 4 seeds. <b>Limite:</b> isso vale para esta linha, é rapidez (as duas atingiram) e são só 4 seeds. Não diz qual é melhor com outro <i>d</i>.</li></ol></div>
+  <div class="destaque"><b>Escolha <i>d</i> = 8 e depois <i>d</i> = 50. Para cada valor: quantas seeds atingiram 0,95, em cada inicialização, e em que épocas? Uma linha para cada valor de <i>d</i> basta.</b><div class="linhas"><i></i><i></i><i></i></div></div>
+</section>
+
+<!-- 10 · SÍNTESE -->
+<section class="page" id="p10">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 10 de 12</div><h1>Todos os valores de <i>d</i></h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>Agora, todos os valores de <i>d</i> de uma vez. Além do número de cada seed, os pontos cheios contam quantas das 4 seeds atingiram 0,95 até as épocas 20 e 40.</p>
+  <div id="tab-grade"></div>
+  <p class="nota">× = não atingiu 0,95 em 40 épocas. Em <i>d</i> = 0 só existem 12 frases diferentes, e a validação repete as do treino: essa linha não mede generalização. Em <i>d</i> = 8, nenhuma frase da validação está no treino. Cada linha é um treino separado, só com frases daquele <i>d</i>: a tabela não mede um mesmo modelo em vários comprimentos. Nesta grade, quem atingiu 0,95 não voltou a ficar abaixo.</p>
+  <div class="destaque"><b>“RNN esquece o passado”: nesta tarefa, isso seria não atingir 0,95 com <i>d</i> grande. A tabela apoia a frase? Use a linha <i>d</i> = 50, nas épocas 20 e 40, nas duas inicializações. O que ainda não dá para afirmar?</b><div class="linhas"><i></i><i></i><i></i><i></i></div></div>
+</section>
+
+<!-- 11 · BUGS -->
+<section class="page" id="p11">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 11 de 12</div><h1>O que as métricas não viram</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>Os bugs B e C do notebook não dão erro. A tabela traz os resultados reais deles, com a mesma seed. As sondas estão na ordem já bom, já ruim, não bom, não ruim, e queremos 1, 0, 0, 1.</p>
+  <table>
+    <tr><th class="esq"></th><th>acerto de validação</th><th>perda de validação</th><th>menor e maior saída</th><th>sondas</th></tr>
+    <tr><th class="esq">bug B: <code>Dense(1)</code> sem ativação</th><td class="dado">1,00</td><td class="dado">0,00</td><td class="dado">−0,17 e 1,15</td><td class="dado">1,06; −0,10; −0,10; 1,08</td></tr>
+    <tr><th class="esq">bug C: rótulo errado</th><td class="dado">1,00</td><td class="dado">0,00</td><td class="dado">0,00 e 1,00</td><td class="dado">1,00; 0,00; 1,00; 0,00</td></tr>
+  </table>
+  <div class="exemplo"><div><span class="tag">Diagnóstico resolvido</span> &nbsp;<b>Bug B</b></div>
+    <div class="diag"><b>sintoma</b><span>acerto 1,00 e perda 0,00: parece perfeito.</span><b>verificação</b><span>olhar a menor e a maior saída da rede.</span><b>achado</b><span>−0,17 e 1,15, fora de 0 a 1: não são probabilidades.</span><b>causa</b><span>a última camada é <code>Dense(1)</code> sem ativação.</span></div></div>
+  <div class="destaque"><b>Faça o mesmo com o bug C: sintoma, verificação, achado e causa. Cite as sondas.</b><div class="linhas"><i></i><i></i><i></i></div></div>
+</section>
+
+<!-- 12 · DECIDIR -->
+<section class="page" id="p12">
+  <div class="cab"><div><div class="sub">Revisão de RNN · 12 de 12</div><h1>Qual rede você escolheria?</h1></div><div class="grupo">Nome <span></span></div></div>
+  <p>Mesmas frases e mesmas seeds, mudando uma coisa de cada vez. A coluna de épocas traz a primeira época com acerto de validação ≥ 0,95, nas seeds 0, 1 e 2. Chegar a 0,95 em menos épocas não significa gastar menos tempo: em um modelo maior, cada época demora mais.</p>
+  <div id="tab-opcoes"></div>
+  <p class="nota">× = não atingiu 0,95 em 40 épocas. O teste foi usado só depois, para confirmar.</p>
+  <div class="destaque"><b>Qual configuração você escolheria? Escreva:<br>a. a configuração escolhida;<br>b. o seu critério (por exemplo, quantas seeds atingem 0,95, ou em que época);<br>c. dois números da tabela que sustentam a escolha;<br>d. o que 3 seeds não permitem afirmar.</b><div class="linhas"><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nome"><p><b>Estado</b>: a RNN só carrega o passado pelo estado, e a mesma célula se repete em cada palavra. O treino pode levar muitas épocas para achar pesos que preservem o que importa. Métrica boa não garante tarefa certa, e uma execução só não decide uma comparação.</p></div>
+</section>
+
+
+<script>
+(function(){
+"use strict";
+const ALUNO=true;
+const h=(tag,at={},...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(at))if(v!=null)e.setAttribute(k,v);kids.flat(Infinity).forEach(k=>k!=null&&e.append(k instanceof Node?k:document.createTextNode(k)));return e;};
+const $=id=>document.getElementById(id);
+const num=(v,d)=>{const r=Number(v.toFixed(d));return (r<0?"−":"")+Math.abs(r).toFixed(d).replace(".",",");};
+const ans=(v,id)=>h("span",{class:"ans","data-id":id||null},ALUNO?"":v);
+const tdA=(v,id)=>h("td",{},ans(v,id));
+const dado=v=>h("td",{class:"dado"},v);
+
+/* sintaxe: pinta só os nós de texto, para não mexer nas cores de rastreio nem no que é copiado */
+const TOK=/("[^"\n]*"|#[^\n]*|\b(?:def|for|in|if|else|return|import|from|None|True|False|not)\b|(?<![\w.])\.?\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*(?=\())/g;
+const classe=s=>s[0]==='"'?"sx-s":s[0]==="#"?"sx-c":/^[.\d]/.test(s)?"sx-n":/^(def|for|in|if|else|return|import|from|None|True|False|not)$/.test(s)?"sx-k":"sx-f";
+const pinta=no=>{const f=document.createDocumentFragment();let i=0,m;const s=no.nodeValue;TOK.lastIndex=0;while((m=TOK.exec(s))){f.append(s.slice(i,m.index),h("span",{class:classe(m[0])},m[0]));i=m.index+m[0].length;}f.append(s.slice(i));no.replaceWith(f);};
+const destaca=pre=>{const w=document.createTreeWalker(pre,NodeFilter.SHOW_TEXT),nos=[];while(w.nextNode())if(!w.currentNode.parentElement.closest(".ln"))nos.push(w.currentNode);nos.forEach(pinta);};
+
+/* página 2: montar a rede. Os formatos seguem o Keras (ferramentas/atividades-keras/regras_empilhar.py);
+   além do que o Keras recusa, ficam em vermelho os empilhamentos que não fazem sentido e o que não serve para a tarefa. */
+const VOCAB=15,PASSOS=13;
+const NOME={E:"Embedding",R:"SimpleRNN",D:"Dense"};
+const ATIV=[["none","sem ativação"],["sigmoid","sigmoid"],["softmax","softmax"],["relu","relu"],["tanh","tanh"]];
+const NOVA={E:()=>({t:"E",dim:8}),R:()=>({t:"R",u:16,rs:false}),D:()=>({t:"D",u:1,a:"none"})};
+const ER={
+  "emb-pos":["A Embedding só recebe ids","A Embedding troca cada id de palavra por um vetor. Aqui já chegam vetores, que não são ids. Deixe uma Embedding só, logo depois da entrada."],
+  "rnn-ids":["Faltam os vetores","Chegam ids, (None, 13), e a RNN precisa de um vetor por palavra. Coloque uma Embedding antes: ela troca cada id por um vetor."],
+  "rnn-rs":["Sem eixo do tempo","Chegou um vetor por frase, e a RNN precisa de um vetor por palavra para percorrer. Ligue o return_sequences na RNN anterior: ela passa a entregar o estado de cada palavra."],
+  "rnn-vet":["Sem eixo do tempo","Chegou um único vetor por frase, e a RNN precisa de um vetor por palavra. Mantenha o eixo do tempo até esta RNN."],
+  "dense-ids":["O id é um nome, não uma quantidade","A Dense multiplicaria cada id por um peso, como se o id 5 valesse mais que o 4. Coloque uma Embedding antes."],
+  "saida-tempo":["A saída tem uma resposta por palavra","A tarefa pede uma resposta por frase. Ainda há eixo do tempo chegando na saída: use uma SimpleRNN sem return_sequences antes da Dense."],
+  "saida-tam":["Saída com mais de um número","A tarefa pede um número só, a probabilidade de a frase ser positiva. Use Dense(1)."],
+  "ativ-none":["Saída sem ativação","Sem ativação, a saída pode passar de 1 ou ficar abaixo de 0, e não é uma probabilidade."],
+  "ativ-softmax":["Softmax com uma saída só","A softmax divide cada saída pela soma de todas. Com uma saída só, o resultado é sempre 1,0."],
+  "ativ-relu":["Relu na saída","A relu corta os valores negativos, mas pode passar de 1: não é uma probabilidade."],
+  "ativ-tanh":["Tanh na saída","A tanh vai de −1 a 1, e uma probabilidade vai de 0 a 1."]};
+/* devolve, para cada camada, o formato de saída ou o erro; depois do primeiro erro, nada mais é avaliado */
+const analisar=P=>{
+  let s={k:"ids",t:PASSOS},erro=null;
+  const cam=P.map((c,i)=>{
+    if(erro)return{s:null,erro:null};
+    let e=null;
+    if(c.t==="E"){if(s.k!=="ids")e="emb-pos";else s={k:"seq",t:s.t,n:c.dim,c:"c3"};}
+    else if(c.t==="R"){if(s.k==="ids")e="rnn-ids";else if(s.k==="vet")e=(i>0&&P[i-1].t==="R")?"rnn-rs":"rnn-vet";else s=c.rs?{k:"seq",t:s.t,n:c.u,c:"c4"}:{k:"vet",n:c.u,c:"c4"};}
+    else{if(s.k==="ids")e="dense-ids";else s=s.k==="seq"?{k:"seq",t:s.t,n:c.u,c:"c5"}:{k:"vet",n:c.u,c:"c5"};}
+    if(e){erro=e;return{s:null,erro:e};}
+    return{s:{...s},erro:null};});
+  if(erro)return{cam,fim:"erro",erro};
+  if(!P.length||P[P.length-1].t!=="D")return{cam,fim:"incompleta",erro:null};
+  const u=P[P.length-1];
+  let f=null;
+  if(s.k==="seq")f="saida-tempo";else if(s.n!==1)f="saida-tam";else if(u.a!=="sigmoid")f="ativ-"+u.a;
+  if(f){cam[cam.length-1].erro=f;return{cam,fim:"erro",erro:f};}
+  return{cam,fim:"ok",erro:null};};
+window.__empilhar={analisar};
+const formato=s=>s.k==="ids"?["(None, ",h("span",{class:"c1"},String(s.t)),")"]:s.k==="seq"?["(None, ",h("span",{class:"c1"},String(s.t)),", ",h("span",{class:s.c==="c5"?"":s.c},String(s.n)),")"]:["(None, ",h("span",{class:s.c==="c5"?"":s.c},String(s.n)),")"];
+const TINT={c3:"var(--c3)",c4:"var(--c4)",c5:"#8a8f98"};
+const desenho=s=>{const lin=s.k==="ids"?1:Math.min(s.n,16),col=s.k==="vet"?1:s.t,cor=s.k==="ids"?"var(--c1)":TINT[s.c];const g=h("span",{class:"tn",style:`grid-template-columns:repeat(${col},6px)`});for(let i=0;i<lin*col;i++)g.append(h("i",{style:`background:${cor};opacity:.55`}));return g;};
+const codigo=P=>{const L=["modelo = Sequential([",`    Input(shape=(${PASSOS},)),`];P.forEach(c=>L.push(c.t==="E"?`    Embedding(${VOCAB}, ${c.dim}),`:c.t==="R"?`    SimpleRNN(${c.u}${c.rs?", return_sequences=True":""}),`:`    Dense(${c.u}${c.a==="none"?"":`, activation="${c.a}"`}),`));L.push("])");return L.join("\n");};
+const CH="ec08-rnn-empilhar";
+let PILHA=[],vistos=new Set(),feitas={};
+try{const g=JSON.parse(localStorage.getItem(CH)||"null");if(g){PILHA=g.p||[];vistos=new Set(g.v||[]);feitas=g.f||{};}}catch(e){}
+const guarda=()=>{try{localStorage.setItem(CH,JSON.stringify({p:PILHA,v:[...vistos],f:feitas}));}catch(e){}};
+const MISSOES=[["M1","Monte uma arquitetura compatível com a tarefa.",(P,a)=>a.fim==="ok"],["M2","Monte uma arquitetura compatível com duas SimpleRNN seguidas.",(P,a)=>a.fim==="ok"&&P.some((c,i)=>c.t==="R"&&P[i+1]&&P[i+1].t==="R")],["M3","Descubra 3 erros diferentes: abra o sinal vermelho.",()=>vistos.size>=3]];
+const mostraMissoes=(P,a)=>{const m=$("missoes");m.replaceChildren();MISSOES.forEach(([id,txt,ok])=>{if(ok(P,a))feitas[id]=id==="M3"?true:codigo(P);m.append(h("li",{class:feitas[id]?"feita":null},(feitas[id]?"✓ ":"")+txt,typeof feitas[id]==="string"?h("pre",{},feitas[id]):null));});
+  $("vistos").textContent=vistos.size?"Erros descobertos: "+[...vistos].map(k=>ER[k][0]).join("; ")+".":"";guarda();};
+const pilha=$("pilha");
+let arrastado=null,alvo=-1;
+const inserir=(i,c)=>{PILHA.splice(Math.max(0,Math.min(i,PILHA.length)),0,c);render();};
+const render=()=>{
+  const P=PILHA,a=analisar(P);
+  pilha.className="pilha"+(a.fim==="ok"?" ok":"");
+  pilha.replaceChildren();
+  pilha.append(h("div",{class:"camada fixa"},h("span",{class:"nm"},"Entrada"),h("span",{class:"vis-so"},"ids das palavras")));
+  const sigf=s=>s.k==="ids"?"ids, um por palavra":s.k==="seq"?"um vetor por palavra":"um vetor por frase";
+  const ligacao=s=>h("div",{class:"liga"},"↓ ",s?[h("span",{class:"sig"},sigf(s))," ",formato(s)," ",desenho(s)]:"sem saída");
+  pilha.append(ligacao({k:"ids",t:PASSOS}));
+  P.forEach((c,i)=>{
+    const st=a.cam[i],apag=!st.s&&!st.erro;
+    const card=h("div",{class:"camada"+(st.erro?" erro":"")+(apag?" apagada":""),draggable:"true","data-i":String(i)},h("span",{class:"grip","aria-hidden":"true"}),h("span",{class:"nm"},NOME[c.t]));
+    const sel=(rot,chave,ops)=>{const s=h("select",{"aria-label":rot});ops.forEach(([v,t])=>s.append(h("option",{value:String(v)},t)));s.value=String(c[chave]);s.addEventListener("change",()=>{c[chave]=isNaN(s.value)?s.value:Number(s.value);render();});return [h("span",{class:"vis-so"},rot),s];};
+    if(c.t==="E")card.append(...sel("dimensão","dim",[2,4,8,16].map(v=>[v,v])));
+    if(c.t==="R"){card.append(...sel("unidades","u",[8,16,32].map(v=>[v,v])));const b=h("button",{type:"button",class:"sw",role:"switch","aria-checked":String(c.rs)},h("i"),"return_sequences");b.addEventListener("click",()=>{c.rs=!c.rs;render();});card.append(b);}
+    if(c.t==="D"){card.append(...sel("unidades","u",[1,2,4,16].map(v=>[v,v])),...sel("ativação","a",ATIV));}
+    const ac=h("span",{class:"acoes"});
+    [["↑",-1],["↓",1]].forEach(([t,d])=>{const b=h("button",{type:"button","aria-label":t==="↑"?"subir":"descer"},t);b.addEventListener("click",()=>{const j=i+d;if(j<0||j>=P.length)return;[P[i],P[j]]=[P[j],P[i]];render();});ac.append(b);});
+    const x=h("button",{type:"button","aria-label":"remover"},"×");x.addEventListener("click",()=>{P.splice(i,1);render();});ac.append(x);
+    if(st.erro){const k=st.erro,pop=h("div",{class:"pop"},h("b",{},ER[k][0]),h("span",{class:"tipo"},tipoDe(k)),ER[k][1]);const si=h("button",{type:"button",class:"sinal","aria-label":"o que está errado"},"!");
+      const abre=()=>{pop.classList.add("on");if(!vistos.has(k)){vistos.add(k);mostraMissoes(P,analisar(P));}};
+      si.addEventListener("mouseenter",abre);si.addEventListener("focus",abre);si.addEventListener("mouseleave",()=>pop.classList.remove("on"));si.addEventListener("blur",()=>pop.classList.remove("on"));si.addEventListener("click",abre);card.append(si,pop);}
+    card.append(ac);
+    card.addEventListener("dragstart",e=>{arrastado={de:i};e.dataTransfer.setData("text/plain","c");e.dataTransfer.effectAllowed="move";document.body.classList.add("arrastando");});
+    pilha.append(card,ligacao(st.s));});
+  if(!P.length)pilha.append(h("div",{class:"vazia"},"Arraste as camadas para cá"));
+  const st=$("status"),msg=!P.length?"Comece arrastando uma camada para a pilha.":a.fim==="ok"?"Arquitetura compatível com a tarefa. Se ela aprende, só o treino dirá.":a.fim==="erro"?"Há uma camada em vermelho: passe o mouse no sinal.":"A rede ainda não tem uma saída: termine com uma Dense.";
+  st.textContent=msg;st.className="status"+(a.fim==="ok"?" ok":a.fim==="erro"?" erro":"");
+  const co=$("codigo");co.textContent=codigo(P);destaca(co);
+  mostraMissoes(P,a);};
+document.querySelectorAll(".peca").forEach(b=>{b.addEventListener("click",()=>inserir(PILHA.length,NOVA[b.dataset.t]()));b.addEventListener("dragstart",e=>{arrastado={novo:b.dataset.t};e.dataTransfer.setData("text/plain","n");e.dataTransfer.effectAllowed="copy";document.body.classList.add("arrastando");});});
+const onde=y=>{const cs=[...pilha.querySelectorAll(".camada[data-i]")];for(let k=0;k<cs.length;k++){const r=cs[k].getBoundingClientRect();if(y<r.top+r.height/2)return k;}return cs.length;};
+const marca=h("div",{class:"alvo"});
+const fimArrasto=()=>{document.body.classList.remove("arrastando");marca.remove();};
+pilha.addEventListener("dragover",e=>{e.preventDefault();e.dataTransfer.dropEffect=arrastado&&arrastado.novo?"copy":"move";const cs=[...pilha.querySelectorAll(".camada[data-i]")],k=onde(e.clientY);if(k<cs.length)pilha.insertBefore(marca,cs[k]);else pilha.append(marca);});
+pilha.addEventListener("drop",e=>{e.preventDefault();fimArrasto();if(!arrastado)return;const k=onde(e.clientY);if(arrastado.novo){inserir(k,NOVA[arrastado.novo]());}else{const[c]=PILHA.splice(arrastado.de,1);inserir(k>arrastado.de?k-1:k,c);}arrastado=null;});
+document.addEventListener("dragend",()=>{arrastado=null;fimArrasto();});
+render();
+
+/* gráficos de linha em SVG: uma escala só, grade discreta, valores só nos pontos que importam, dados exatos ao passar o mouse */
+const sv=(t,a={},...k)=>{const e=document.createElementNS("http://www.w3.org/2000/svg",t);for(const[x,y]of Object.entries(a))if(y!=null)e.setAttribute(x,y);k.flat(Infinity).forEach(c=>c!=null&&e.append(c instanceof Node?c:document.createTextNode(c)));return e;};
+const grafico=({xs,marcasX,y:[y0,y1],yt,dec=2,series,ref,alt,forte=[],W=660,H=170,aoEscolher})=>{
+  const L=36,R=26,T=16,B=24,n=xs.length,X=i=>L+i*(W-L-R)/(n-1),Y=v=>T+(y1-v)*(H-T-B)/(y1-y0);
+  const f=sv("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":alt,class:"graf"});
+  yt.forEach(v=>f.append(sv("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),class:"g-grade"}),sv("text",{x:L-6,y:Y(v)+4,"text-anchor":"end",class:"g-eixo"},num(v,v%1?2:0))));
+  if(ref)f.append(sv("line",{x1:L,x2:W-R,y1:Y(ref),y2:Y(ref),class:"g-ref"}));
+  (marcasX||xs.map((_,i)=>i)).forEach(i=>f.append(sv("text",{x:X(i),y:H-7,"text-anchor":"middle",class:"g-eixo"+(forte.includes(i)?" g-forte":"")},String(xs[i]))));
+  const marca=sv("line",{class:"g-marca",y1:T,y2:H-B,style:"display:none"});f.append(marca);
+  series.forEach(s=>f.append(sv("path",{d:s.v.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" "),class:"g-linha",style:`stroke:${s.cor}`})));
+  series.forEach(s=>(s.rot||[]).forEach(i=>f.append(sv("circle",{cx:X(i),cy:Y(s.v[i]),r:4,class:"g-ponto",style:`fill:${s.cor}`}),sv("text",{x:X(i),y:Y(s.v[i])+(s.abaixo?17:-8),"text-anchor":"middle",class:"g-valor"},num(s.v[i],dec)))));
+  xs.forEach((x,i)=>{const r=sv("rect",{x:X(i)-(W-L-R)/(n-1)/2,y:T,width:(W-L-R)/(n-1),height:H-T-B,fill:"transparent",style:aoEscolher?"cursor:pointer":null},sv("title",{},`${x}: `+series.map(s=>(s.nome?s.nome+" ":"")+num(s.v[i],dec)).join("; ")));if(aoEscolher)r.addEventListener("click",()=>aoEscolher(i));f.append(r);});
+  const caixa=h("div",{class:"g-caixa"});
+  if(series.length>1)caixa.append(h("div",{class:"g-leg"},series.map(s=>h("span",{},h("i",{style:`background:${s.cor}`}),s.nome))));
+  caixa.append(f);caixa.marcar=i=>{marca.setAttribute("x1",X(i));marca.setAttribute("x2",X(i));marca.style.display="";};return caixa;};
+const pontos=(L,x)=>{const c=L.filter(e=>e!==null&&e<=x).length;return h("span",{class:"pts"},[0,1,2,3].map(k=>h("i",{class:k<c?"on":null})),h("b",{},String(c)));};
+const TIPOS={k:"O Keras recusa esta montagem.",s:"O Keras monta, mas não faz sentido.",t:"O Keras monta, mas não serve para esta tarefa."};
+const tipoDe=k=>/^(rnn-|st-)/.test(k)?TIPOS.k:/^(emb-pos|dense-ids)/.test(k)?TIPOS.s:TIPOS.t;
+
+/* páginas 2 e 3: leitura real, ferramentas/atividades-keras/leitura_rnn.json */
+const LE={"frase": ["o", "café", "não", "estava", "hoje", "aqui", "bom"], "h": [[0.07999999821186066, 0.36000001430511475, -0.05000000074505806, 0.25, -0.05999999865889549, -0.10000000149011612], [0.27000001072883606, -0.25999999046325684, 0.23000000417232513, -0.2800000011920929, 0.09000000357627869, 0.20000000298023224], [0.009999999776482582, 0.17000000178813934, -0.2199999988079071, 0.5400000214576721, -0.3799999952316284, -0.33000001311302185], [0.5899999737739563, 0.3400000035762787, 0.07999999821186066, -0.9100000262260437, 0.5899999737739563, 0.3799999952316284], [-0.8600000143051147, -0.47999998927116394, -0.20000000298023224, 0.6600000262260437, -0.7200000286102295, -0.75], [0.8899999856948853, 0.8799999952316284, -0.1599999964237213, -0.699999988079071, 0.44999998807907104, 0.5400000214576721], [-0.9700000286102295, -0.9900000095367432, -0.9300000071525574, -0.9900000095367432, -0.7799999713897705, 0.3700000047683716]]};
+const vec=v=>h("span",{class:"vv"},v.map(x=>h("i",{title:num(x,2),style:`background:${x>=0?"var(--c1)":"var(--c2)"};opacity:${(.18+.82*Math.min(1,Math.abs(x))).toFixed(2)}`})));
+const tabLe=(ate,fnCl)=>h("table",{class:"tle"},
+  h("tr",{},h("th",{class:"esq"},"palavra"),LE.frase.map((p,k)=>h("th",{class:k===ate-1?"atual":null},p==="não"?h("span",{class:"c2"},p):p==="bom"?h("span",{class:"c1"},p):p))),
+  h("tr",{},h("th",{class:"esq"},"estado"),LE.h.map((v,k)=>h("td",{class:[(k>=ate?"futuro":""),(fnCl?fnCl(k):"")].join(" ").trim()||null},vec(v)))));
+let passo=0;
+const desenhaLe=()=>{$("le-tab").replaceChildren(tabLe(passo));$("le-prox").disabled=passo>=7;$("le-st").textContent=passo===0?"Clique em Próxima palavra.":passo<7?`A mesma célula já leu ${passo} de 7 palavras.`:"Fim da frase. A última coluna tem o último estado.";};
+$("le-prox").addEventListener("click",()=>{if(passo<7){passo++;desenhaLe();}});
+$("le-zera").addEventListener("click",()=>{passo=0;desenhaLe();});
+desenhaLe();
+const CHD="ec08-rnn-devolve";let chR=false,dFeitos={};
+try{const g=JSON.parse(localStorage.getItem(CHD)||"null");if(g){chR=!!g.r;dFeitos=g.d||{};}}catch(e){}
+const DES=[["D1","Você vai colocar outra SimpleRNN logo depois desta. Deixe a camada pronta para ela.",r=>r,"A próxima RNN recebe um vetor por palavra."],
+  ["D2","Agora esta é a última RNN, e uma Dense vem depois dela.",r=>!r,"A Dense recebe um vetor por frase."]];
+const desenhaDv=()=>{
+  $("ch-seq").setAttribute("aria-checked",String(chR));
+  $("dv-tab").replaceChildren(tabLe(7,k=>chR||k===6?"sai":""));
+  $("dv-saida").replaceChildren(h("div",{class:"dv-s"},h("div",{},h("span",{class:"rot-s"},"saída da camada"),h("span",{},chR?"um vetor por palavra, (None, 7, 16)":"um vetor por frase, (None, 16)"),chR?LE.h.map(vec):vec(LE.h[6])),h("p",{class:"nota"},chR?"Outra RNN pode percorrer esta sequência. O último vetor é o último estado.":"Uma Dense pode ler este vetor.")));
+  const at=DES.findIndex(([id])=>!dFeitos[id]);if(at>=0&&DES[at][2](chR))dFeitos[DES[at][0]]=true;
+  const m=$("desafios");m.replaceChildren();const prox=DES.findIndex(([id])=>!dFeitos[id]);
+  DES.forEach(([id,t,,r],k)=>m.append(h("li",{class:dFeitos[id]?"feita":(k===prox?null:"apagada")},(dFeitos[id]?"✓ ":"")+t+(dFeitos[id]?" "+r:""))));
+  try{localStorage.setItem(CHD,JSON.stringify({r:chR,d:dFeitos}));}catch(e){}};
+$("ch-seq").addEventListener("click",()=>{chR=!chR;desenhaDv();});
+desenhaDv();
+
+/* página 5: parâmetros; a linha resolvida, a parcial e a independente */
+const orig=(v,o)=>h("td",{class:"dado"},String(v),h("small",{class:"orig"},o));
+const conta=(m,n)=>{const e=VOCAB*m,a=m*n,b=n*n,c=n,d=n+1;return{e,a,b,c,d,t:e+a+b+c+d};};
+const R1=conta(8,16),R2=conta(8,16),R3=conta(8,32);
+$("tab-param").append(h("table",{class:"tparam"},
+  h("tr",{},h("th",{class:"esq"},"rede"),h("th",{},"Embedding"),h("th",{},"entrada → estado"),h("th",{},"estado → estado"),h("th",{},"viés"),h("th",{},"Dense"),h("th",{},"total")),
+  h("tr",{class:"ex-linha"},h("th",{class:"esq"},"Exemplo: acompanhe o preenchimento. 13 palavras, 16 unidades"),orig(R1.e,"15 × 8"),orig(R1.a,"8 × 16"),orig(R1.b,"16 × 16"),orig(R1.c,"16"),orig(R1.d,"16 + 1"),orig(R1.t,"soma das parcelas")),
+  h("tr",{},h("th",{class:"esq"},"30 palavras, 16 unidades"),dado(String(R2.e)),dado(String(R2.a)),dado(String(R2.b)),tdA(String(R2.c)),tdA(String(R2.d)),tdA(String(R2.t))),
+  h("tr",{},h("th",{class:"esq"},"13 palavras, 32 unidades"),tdA(String(R3.e)),tdA(String(R3.a)),tdA(String(R3.b)),tdA(String(R3.c)),tdA(String(R3.d)),tdA(String(R3.t)))));
+
+/* página 5: ferramentas/atividades-keras/saidas_rnn.json */
+const SERIE=[0.478, 0.473, 0.492, 0.497, 0.499, 0.498, 0.497, 0.495, 0.499, 0.495, 0.496, 0.504, 0.665, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+const gVal=grafico({aoEscolher:i=>irEp(i+1),xs:SERIE.map((_,i)=>i+1),marcasX:[0,4,12,13,19,29,39],y:[0,1],yt:[0,.5,1],ref:.5,alt:"acerto de validação por época",series:[{nome:"acerto",v:SERIE,cor:"var(--c1)",rot:[4,12,13]}]});
+$("tab-val").append(gVal);
+const PT=[[0.518, 0.508, 0.511, 0.501], [0.507, 0.497, 0.5, 0.49], [0.493, 0.482, 0.486, 0.476], [0.484, 0.473, 0.478, 0.467], [0.482, 0.471, 0.476, 0.465], [0.482, 0.472, 0.476, 0.465], [0.485, 0.474, 0.479, 0.467], [0.488, 0.476, 0.482, 0.47], [0.491, 0.479, 0.485, 0.473], [0.494, 0.482, 0.489, 0.476], [0.498, 0.484, 0.493, 0.479], [0.503, 0.485, 0.501, 0.483], [0.526, 0.464, 0.547, 0.53], [0.777, 0.24, 0.264, 0.825], [0.933, 0.069, 0.086, 0.943], [0.965, 0.036, 0.042, 0.965], [0.977, 0.023, 0.026, 0.975], [0.984, 0.017, 0.018, 0.981], [0.988, 0.013, 0.014, 0.984], [0.99, 0.011, 0.011, 0.987], [0.992, 0.009, 0.009, 0.989], [0.993, 0.008, 0.007, 0.991], [0.994, 0.007, 0.006, 0.992], [0.995, 0.006, 0.005, 0.993], [0.996, 0.005, 0.005, 0.994], [0.996, 0.005, 0.004, 0.994], [0.997, 0.004, 0.004, 0.995], [0.997, 0.004, 0.003, 0.995], [0.997, 0.003, 0.003, 0.996], [0.998, 0.003, 0.003, 0.996], [0.998, 0.003, 0.002, 0.996], [0.998, 0.003, 0.002, 0.997], [0.998, 0.002, 0.002, 0.997], [0.998, 0.002, 0.002, 0.997], [0.999, 0.002, 0.002, 0.997], [0.999, 0.002, 0.001, 0.998], [0.999, 0.002, 0.001, 0.998], [0.999, 0.002, 0.001, 0.998], [0.999, 0.002, 0.001, 0.998], [0.999, 0.002, 0.001, 0.998]];
+const FR=[["já … bom",1],["já … ruim",0],["não … bom",0],["não … ruim",1]];
+const PE={5:[.482,.471,.476,.465],13:[.526,.464,.547,.53],14:[.777,.24,.264,.825]};
+const resp=p=>p>.5?1:0;
+const acertos=e=>PE[e].filter((p,k)=>resp(p)===FR[k][1]).length;
+const cor=(c,v)=>h("span",{class:c},v);
+const EPS=[5,13,14];
+$("tab-frases").append(h("table",{},
+  h("tr",{},h("th",{class:"esq"},"sonda"),h("th",{},"queremos"),EPS.map(e=>[h("th",{"data-ep":e},`P época ${e}`),h("th",{"data-ep":e},`resposta ${e}`)])),
+  FR.map(([f,q],k)=>h("tr",{},h("th",{class:"esq"},f),k===0?h("td",{class:"dado"},cor("c3",String(q))):dado(String(q)),
+    EPS.map(e=>{const p=PE[e][k],r=resp(p),ex=k===0&&e===5;return [h("td",{class:"dado","data-ep":e},ex?cor("c1",num(p,2)):num(p,2)),h("td",{class:r===q?"certo":"errou","data-ep":e},ex?cor("c2",String(r)):String(r))];}))),
+  h("tr",{},h("th",{class:"esq",colspan:"2",style:"text-align:right"},"acertos, de 4"),EPS.map(e=>[h("td",{}),dado(String(acertos(e)))]))));
+
+const epS=$("ep-sl");
+const irEp=e=>{epS.value=e;$("ep-n").textContent=e;gVal.marcar(e-1);const P=PT[e-1];
+  $("ep-p").replaceChildren(h("table",{},h("tr",{},h("th",{class:"esq"},"sonda"),FR.map(([f])=>h("th",{},f))),h("tr",{},h("th",{class:"esq"},"P"),P.map(p=>dado(num(p,3)))),h("tr",{},h("th",{class:"esq"},"queremos"),FR.map(([,q])=>dado(String(q)))),h("tr",{},h("th",{class:"esq"},"resposta"),P.map((p,k)=>h("td",{class:resp(p)===FR[k][1]?"certo":"errou"},String(resp(p)))))));
+  document.querySelectorAll("[data-ep]").forEach(x=>x.classList.toggle("col-on",x.dataset.ep===String(e)));};
+epS.addEventListener("input",()=>irEp(Number(epS.value)));irEp(13);
+
+/* página 8: ferramentas/atividades-keras/estado_rnn.json; épocas em ordem, por isso uma cor só, do claro ao escuro */
+const DIST={"5": [0.0, 0.0, 0.11, 0.11, 0.11, 0.11, 0.11, 0.11, 0.11, 0.1, 0.1, 0.1, 0.09], "13": [0.0, 0.0, 0.61, 0.73, 0.83, 0.95, 1.05, 1.11, 1.2, 1.22, 1.33, 1.48, 1.47], "14": [0.0, 0.0, 1.13, 1.53, 2.16, 2.57, 2.98, 3.16, 3.23, 3.47, 3.62, 3.69, 3.05], "40": [0.0, 0.0, 1.15, 1.41, 2.32, 3.06, 3.6, 4.97, 4.47, 5.11, 4.99, 5.04, 5.42]};
+const PALAVRAS=["o", "café", "não", "estava", "hoje", "aqui", "ontem", "lá", "muito", "bem", "hoje", "aqui", "bom"];
+const gD=grafico({aoEscolher:i=>irPa(i),xs:PALAVRAS,forte:[2,12],y:[0,6],yt:[0,3,6],alt:"distância entre os estados das leituras já e não, palavra por palavra, em quatro épocas",series:[["5","#cdbde6"],["13","#a884d6"],["14","#7a3fb5"],["40","#45207a"]].map(([e,c])=>({nome:"época "+e,v:DIST[e],cor:c,rot:[12]}))});
+$("g-dist").append(gD);
+const paS=$("pa-sl");
+const irPa=i=>{paS.value=i;$("pa-n").textContent=PALAVRAS[i];gD.marcar(i);const E=["5","13","14","40"];$("pa-v").replaceChildren(h("table",{},h("tr",{},E.map(e=>h("th",{},"distância na época "+e))),h("tr",{},E.map(e=>dado(num(DIST[e][i],2))))));};
+paS.addEventListener("input",()=>irPa(Number(paS.value)));irPa(2);
+
+/* página 7: ferramentas/atividades-keras/grade_SimpleRNN.json e grade_SimpleRNN_glorot_uniform.json */
+const N=null;
+const GRADE=[[0,[18,13,12,30],[10,14,N,8]],[8,[14,26,9,22],[13,3,24,23]],[15,[18,18,25,21],[14,8,9,17]],[30,[7,15,18,13],[32,22,8,35]],[50,[12,23,22,34],[N,N,35,N]]];
+const ate=(L,x)=>L.filter(e=>e!==null&&e<=x).length;
+const lista=L=>L.map(e=>e===null?"×":e).join(", ");
+/* página 9: uma linha por seed, para um d escolhido */
+const nOuX=e=>e===null?"×":String(e);
+const faixa=L=>{const v=L.filter(x=>x!==null);return v.length?(Math.min(...v)===Math.max(...v)?String(v[0]):Math.min(...v)+" a "+Math.max(...v)):"nenhum";};
+let dSel=15;
+const desenhaSeed=()=>{const[,Os,Gs]=GRADE.find(([d])=>d===dSel);
+  document.querySelectorAll("#d-bts button").forEach(b=>b.setAttribute("aria-pressed",String(Number(b.dataset.d)===dSel)));
+  const sim=e=>h("td",{class:"dado"},h("span",{class:"pts"},h("i",{class:e!==null?"on":null}),h("b",{},e!==null?"sim":"não")));
+  $("tab-seed").replaceChildren(h("div",{class:"rot"},`d = ${dSel}: frases de ${dSel+5} palavras`),h("table",{class:"comp"},
+    h("tr",{},h("th",{rowspan:"2"},"seed"),h("th",{colspan:"2"},"ortogonal"),h("th",{colspan:"2"},"glorot")),
+    h("tr",{},["atingiu 0,95?","em qual época?","atingiu 0,95?","em qual época?"].map(x=>h("th",{},x))),
+    [0,1,2,3].map(s=>h("tr",{},dado(String(s)),sim(Os[s]),dado(nOuX(Os[s])),sim(Gs[s]),dado(nOuX(Gs[s])))),
+    h("tr",{class:"foco"},h("th",{},"resumo"),dado(ate(Os,40)+" de 4"),dado(faixa(Os)),dado(ate(Gs,40)+" de 4"),dado(faixa(Gs)))));};
+[8,15,30,50].forEach(d=>{const b=h("button",{type:"button","data-d":String(d),"aria-pressed":"false"},"d = "+d);b.addEventListener("click",()=>{dSel=d;desenhaSeed();});$("d-bts").append(b);});
+desenhaSeed();
+
+/* página 10: tabela completa */
+$("tab-grade").append(h("table",{},
+  h("tr",{},h("th",{class:"esq",rowspan:"2"},"d"),h("th",{colspan:"3"},"Ortogonal"),h("th",{colspan:"3"},"Glorot")),
+  h("tr",{},h("th",{},"épocas das 4 seeds"),h("th",{},"até 20"),h("th",{},"até 40"),h("th",{},"épocas das 4 seeds"),h("th",{},"até 20"),h("th",{},"até 40")),
+  GRADE.map(([d,O,G])=>h("tr",{class:d===15?"foco":null},h("th",{class:"esq"},d),dado(lista(O)),h("td",{class:"dado"},pontos(O,20)),h("td",{class:"dado"},pontos(O,40)),dado(lista(G)),h("td",{class:"dado"},pontos(G,20)),h("td",{class:"dado"},pontos(G,40))))));
+
+/* página 9: ferramentas/atividades-keras/praticos_rnn.json */
+const OP=[["referência: 16 unidades, Embedding de 8",537,[14,26,9],"1,00; 1,00; 1,00"],["unidades = 8",265,[6,8,20],"1,00; 1,00; 1,00"],["unidades = 32",1465,[37,14,34],"1,00; 1,00; 1,00"],["Embedding de 2",351,[N,N,23],"0,51; 0,51; 1,00"],["Embedding de 16",785,[11,12,7],"1,00; 1,00; 1,00"],["recorrência glorot",537,[13,3,24],"1,00; 1,00; 1,00"]];
+$("tab-opcoes").append(h("table",{},h("tr",{},h("th",{class:"esq"},"opção"),h("th",{},"parâmetros"),h("th",{},"épocas das 3 seeds"),h("th",{},"teste das 3 seeds")),
+  OP.map(([o,p,L,t])=>h("tr",{},h("th",{class:"esq"},o),dado(String(p)),dado(lista(L)),dado(t)))));
+
+document.querySelectorAll("pre.cod:not(#codigo)").forEach(destaca);
+
+})();
+</script>
+<script>
+/* Versão do aluno, preenchida na tela (computador ou celular): cada resposta vazia vira um campo, as linhas
+   de texto livre viram uma caixa de texto, as linhas em cinza repetem as respostas das páginas anteriores,
+   tudo fica guardado neste navegador e "Baixar PDF" imprime as páginas com o nome do grupo (ou do aluno, quando
+   o cabeçalho diz "Nome"). Com <body data-registro>, cada campo guarda quando foi preenchido, o tempo de edição e
+   quanto foi digitado ou colado, e o PDF ganha uma última página com esse registro. Embutido por versao_aluno.py
+   depois do script da própria atividade, que já desenhou as páginas. */
+(function(){
+"use strict";
+const h=(tag,at={},...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(at))if(v!=null)e.setAttribute(k,v);kids.flat().forEach(k=>k!=null&&e.append(k instanceof Node?k:document.createTextNode(k)));return e;};
+const TITULO=document.title,STORE="ec08-atividade-"+TITULO.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g,"-");
+
+/* campos */
+const INDIVIDUAL=/^\s*Nome/.test(document.querySelector(".cab .grupo")?.textContent||"");
+const campo=id=>h("input",{class:"campo",type:"text",size:"3",autocomplete:"off",autocapitalize:"off",spellcheck:"false","aria-label":"resposta","data-id":id});
+document.querySelectorAll("span.ans").forEach(s=>s.replaceWith(campo(s.getAttribute("data-id"))));
+document.querySelectorAll(".caixa").forEach(c=>{if(!c.querySelector(".campo"))c.append(campo());});
+document.querySelectorAll(".linhas").forEach(l=>{l.querySelectorAll("i").forEach(i=>i.remove());
+  l.append(h("textarea",{class:"campo",rows:"3","aria-label":INDIVIDUAL?"sua resposta":"resposta do grupo"}));});
+document.querySelectorAll(".page table").forEach(t=>{const r=h("div",{class:"rola"});t.replaceWith(r);r.append(t);});
+const cresce=t=>{t.style.height="auto";t.style.height=t.scrollHeight+2+"px";};
+
+/* o grupo (ou o aluno): um campo no cabeçalho da primeira página, repetido nas outras e em .eco-nome */
+const cabs=[...document.querySelectorAll(".cab .grupo span")];
+const grupo=h("input",{class:"campo",id:"grupo",autocomplete:"off",placeholder:INDIVIDUAL?"seu nome":"nome do grupo","aria-label":INDIVIDUAL?"nome":"grupo"});
+if(cabs[0])cabs[0].replaceWith(grupo);
+const mostraGrupo=()=>[...cabs.slice(1),...document.querySelectorAll(".eco-nome")].forEach(s=>s.textContent=grupo.value.trim());
+
+/* as linhas em cinza seguem os campos de origem */
+const ecos=[...document.querySelectorAll("[data-de]")];
+const atualizaEcos=()=>ecos.forEach(e=>{const c=document.querySelector(`input[data-id="${e.getAttribute("data-de")}"]`);e.textContent=c?c.value.trim():"";});
+
+/* só o botão de baixar o PDF */
+const pdf=h("button",{type:"button",class:"pdf"},"Baixar PDF"),estado=h("p",{class:"estado","aria-live":"polite"});
+document.querySelector(".bar").replaceChildren(pdf,estado);
+
+/* guardado neste navegador; se a atividade mudou (outro número de campos), volta só o que tem data-id */
+const campos=[...document.querySelectorAll(".page .campo")].filter(c=>c!==grupo);
+/* registro por campo: i início, f última edição, a tempo ativo (ms), d caracteres digitados, c colados, nc colagens.
+   O tempo ativo de um campo soma o intervalo desde a edição anterior em qualquer campo, quando ele é menor que PAUSA:
+   assim conta também o tempo de pensar antes de escrever, e uma saída longa não conta. A primeira edição conta
+   desde que a página foi aberta. */
+const REGISTRO=document.body.hasAttribute("data-registro"),PAUSA=180000;
+let reg=campos.map(()=>({i:0,f:0,a:0,d:0,c:0,nc:0})),aberto=Date.now(),ultima=Date.now();
+function salva(){try{localStorage.setItem(STORE,JSON.stringify({n:campos.length,grupo:grupo.value,campos:campos.map(c=>c.value),
+  ids:campos.map(c=>c.dataset.id||""),reg,aberto}));}catch(e){}}
+let guardado=null;try{guardado=JSON.parse(localStorage.getItem(STORE)||"null");}catch(e){}
+if(guardado){grupo.value=guardado.grupo||"";if(guardado.aberto)aberto=guardado.aberto;
+  if(guardado.n===campos.length){campos.forEach((c,j)=>{c.value=guardado.campos[j]||"";});if(guardado.reg&&guardado.reg.length===campos.length)reg=guardado.reg;}
+  else if(guardado.ids)campos.forEach((c,j)=>{const k=c.dataset.id?guardado.ids.indexOf(c.dataset.id):-1;if(k>=0){c.value=guardado.campos[k]||"";if(guardado.reg)reg[j]=guardado.reg[k];}});}
+else if(REGISTRO)salva();
+const antes=new Map(campos.map(c=>[c,c.value.length]));
+function registra(c,tipo){
+  const j=campos.indexOf(c);if(j<0)return;
+  const r=reg[j],agora=Date.now(),delta=c.value.length-(antes.get(c)||0);antes.set(c,c.value.length);
+  if(agora-ultima<PAUSA)r.a+=agora-ultima;
+  if(!r.i)r.i=agora;
+  r.f=ultima=agora;
+  if(delta>0){if(/^insertFrom(Paste|Drop)/.test(tipo||"")){r.c+=delta;r.nc++;}else r.d+=delta;}
+}
+document.addEventListener("input",e=>{if(e.target.tagName==="TEXTAREA")cresce(e.target);if(e.target===grupo){grupo.classList.remove("falta");estado.textContent="";mostraGrupo();}
+  if(REGISTRO)registra(e.target,e.inputType);atualizaEcos();salva();});
+mostraGrupo();atualizaEcos();document.querySelectorAll("textarea").forEach(cresce);
+
+/* a página do registro: montada na hora de imprimir, com o que está guardado */
+const doisDig=n=>String(n).padStart(2,"0");
+const hora=t=>{if(!t)return"";const d=new Date(t);return`${doisDig(d.getDate())}/${doisDig(d.getMonth()+1)} ${doisDig(d.getHours())}:${doisDig(d.getMinutes())}`;};
+const dur=ms=>{const s=Math.round(ms/1000);return`${Math.floor(s/60)} min ${doisDig(s%60)} s`;};
+function paginaRegistro(){
+  document.getElementById("registro")?.remove();
+  const pags=[...document.querySelectorAll(".page")];
+  const onde=c=>{const p=c.closest(".page"),n=pags.indexOf(p)+1,k=[...p.querySelectorAll(`${c.tagName}.campo`)].filter(x=>x!==grupo).indexOf(c)+1;return`pág. ${n} · ${c.tagName==="TEXTAREA"?"texto":"campo"} ${k}`;};
+  /* uma linha por página para os campos curtos, e uma por caixa de texto */
+  const soma=rs=>rs.reduce((s,r)=>({i:r.i&&(!s.i||r.i<s.i)?r.i:s.i,f:Math.max(s.f,r.f),a:s.a+r.a,d:s.d+r.d,c:s.c+r.c,nc:s.nc+r.nc}),{i:0,f:0,a:0,d:0,c:0,nc:0});
+  const linhas=[];
+  pags.forEach((p,k)=>{const js=campos.map((c,j)=>j).filter(j=>campos[j].closest(".page")===p&&(reg[j].i||campos[j].value));
+    const curtos=js.filter(j=>campos[j].tagName!=="TEXTAREA");
+    if(curtos.length)linhas.push([`pág. ${k+1} · ${curtos.length} campos curtos`,soma(curtos.map(j=>reg[j])),curtos.reduce((s,j)=>s+campos[j].value.length,0)]);
+    js.filter(j=>campos[j].tagName==="TEXTAREA").forEach(j=>linhas.push([onde(campos[j]),reg[j],campos[j].value.length]));});
+  const tot=reg.reduce((s,r)=>({a:s.a+r.a,d:s.d+r.d,c:s.c+r.c}),{a:0,d:0,c:0});
+  const ts=reg.filter(r=>r.i);
+  const sec=h("section",{class:"page",id:"registro"},
+    h("div",{class:"cab"},h("div",{},h("div",{class:"sub"},TITULO),h("h1",{},"Registro de preenchimento")),h("div",{class:"grupo"},grupo.value.trim())),
+    h("p",{class:"nota"},`Caderno aberto pela primeira vez neste navegador em ${hora(aberto)}. Primeira resposta: ${hora(Math.min(...ts.map(r=>r.i)))}; última edição: ${hora(Math.max(...ts.map(r=>r.f)))}. `+
+      `Tempo ativo somado: ${dur(tot.a)} (intervalos de até 3 min entre uma edição e a seguinte). Digitados: ${tot.d} caracteres; colados: ${tot.c}. Gerado em ${hora(Date.now())}.`),
+    h("table",{class:"reg"},h("tr",{},["resposta","início","última edição","tempo ativo","digitados","colados (vezes)"].map(t=>h("th",{},t))),
+      linhas.map(([rot,r])=>h("tr",{},h("td",{class:"esq"},rot),h("td",{},hora(r.i)),h("td",{},hora(r.f)),h("td",{},dur(r.a)),h("td",{},String(r.d)),h("td",{},r.c?`${r.c} (${r.nc})`:"0")))),
+    /* os campos com data-id, em base64, para a correção ler do PDF (ferramentas/corrigir.py da ponderada) */
+    h("p",{class:"dados"},"atividade-dados-v1:"+btoa(unescape(encodeURIComponent(JSON.stringify({nome:grupo.value.trim(),
+      campos:Object.fromEntries(campos.filter(c=>c.dataset.id).map(c=>[c.dataset.id,c.value.trim()])),
+      registro:linhas.map(([rot,r,n])=>({onde:rot,n,...r}))}))))+":fim-dados"));
+  document.body.append(sec);
+}
+if(REGISTRO){const st=document.createElement("style");st.textContent=".reg td,.reg th{font-size:11px;height:auto;padding:1px 4px}#registro{min-height:0}#registro .dados{font:7px/1.2 ui-monospace,Menlo,monospace;color:#999;word-break:break-all}@media screen{#registro{display:none}}";document.head.append(st);}
+
+/* PDF: a janela de impressão do navegador, com "Salvar como PDF". No papel, cada campo curto vira texto que
+   quebra linha (um input corta o que não cabe); o registro também é montado no clique, para o caso de o
+   navegador não avisar a impressão. */
+function paraImprimir(){
+  document.querySelectorAll("textarea").forEach(cresce);
+  document.querySelectorAll("input.campo").forEach(c=>{let s=c.nextElementSibling;
+    if(!s||!s.classList.contains("impresso")){s=h("span",{class:"impresso"});c.after(s);}s.textContent=c.value;});
+  if(REGISTRO)paginaRegistro();
+}
+addEventListener("beforeprint",paraImprimir);
+pdf.addEventListener("click",()=>{
+  if(grupo.value.trim().length<2){grupo.classList.add("falta");grupo.focus();estado.textContent=INDIVIDUAL?"Escreva o seu nome antes de baixar.":"Escreva o nome do grupo antes de baixar.";return;}
+  document.title=`${TITULO} - ${grupo.value.trim()}`;estado.textContent="Na janela de impressão, escolha “Salvar como PDF”. No celular, use Compartilhar ou Imprimir e salve em PDF.";
+  paraImprimir();setTimeout(()=>{print();document.title=TITULO;},50);});
+})();
+</script>
+</body>
+</html>
