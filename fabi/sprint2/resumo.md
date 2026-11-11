@@ -1,6 +1,4 @@
-# ROS2
-
-&emsp;Robot Operating System (Sistema Operacional para Robôs)
+# ROS2 - Robot Operating System (Sistema Operacional para Robôs)
 
 &emsp;Conjunto de ferramentas, bibliotecas e padrões que facilita o desenvolvimento de aplicações robóticas.
 
@@ -45,8 +43,8 @@ graph TD
 &emsp;Ele publica essas informações em um tópico. Outros nós interessados nessas informações podem se inscrever nesse mesmo tópico e receber os dados.
 
 &emsp;Existem dois papéis:
-- Publisher: nó que publica informações.
-- Subscriber: nó que recebe informações de um tópico ao qual está inscrito.
+- **Publisher:** nó que publica informações.
+- **Subscriber:** nó que recebe informações de um tópico ao qual está inscrito.
 
 #### B. Services
 &emsp;Agora imagine que um nó precisa solicitar uma informação específica a outro nó.
@@ -54,8 +52,8 @@ graph TD
 &emsp;Por exemplo: o sistema pergunta ao nó de localização qual é a posição atual do robô.
 
 &emsp;Existem dois papéis:
-- Client: envia a solicitação.
-- Server: recebe a solicitação e devolve uma resposta.
+- **Client:** envia a solicitação.
+- **Server:** recebe a solicitação e devolve uma resposta.
 
 &emsp;<b>*Quando usar?*</b> Para operações relativamente rápidas, em que faz sentido solicitar algo e aguardar uma resposta.
 
@@ -131,7 +129,7 @@ graph TD
 &emsp;O Nav2 organiza essas responsabilidades em componentes. Três conceitos importantes são Planner (planejador), Controller (controlador) e Navigator (navegador).
 
 ### 5.1 Planner (Planejador)
-&emsp;O Planner é responsável por calcular um caminho para o robô chegar ao destino.
+&emsp;Responsável por calcular um caminho para o robô chegar ao destino.
 
 &emsp;Imagine que o robô está no ponto A e precisa chegar ao ponto D. Existe um corredor bloqueado e ele precisa encontrar outro caminho.
 
@@ -149,7 +147,7 @@ graph TD
 &emsp;O controlador recebe o caminho planejado e utiliza informações sobre a posição e o movimento atual do robô para determinar quais velocidades devem ser aplicadas. 
 
 ### 5.3 Navigator (Navegador)
-&emsp;O Navigator é responsável por coordenar o processo de navegação como um todo.
+&emsp;Responsável por coordenar o processo de navegação como um todo.
 
 &emsp;Imagine que o robô recebe a solicitação para ir até o banheiro. Ele precisa coordenar as etapas necessárias para que a tarefa seja concluída.
 

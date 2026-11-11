@@ -70,12 +70,12 @@
 ### O que é recursão?
 &emsp;É quando uma função chama a si mesma.
 
-&emsp;Imagine uma função chamada visitar(vértice).
+&emsp;Imagine uma função chamada `visitar(vértice).`
 
 &emsp;Ela faz o seguinte:
 1. Marca o vértice atual como visitado.
 2. Percorre seus vizinhos.
-3. Para cada vizinho ainda não visitado, chama visitar(vizinho).
+3. Para cada vizinho ainda não visitado, chama `visitar(vizinho)`.
 4. Quando não há mais vizinhos novos, a função termina e retorna à chamada anterior.
 
 &emsp;A função vai chamando a si mesma, aprofundando a exploração. Quando chega a um ponto sem saída, as chamadas terminam e o programa retorna aos pontos anteriores. Esse retorno é chamado de **backtracking**.
@@ -84,7 +84,7 @@
 
 &emsp;DFS, existem dois tipos de arestas que precisamos entender:
 - **Aresta de árvore:** leva a um vértice que ainda não havia sido visitado.
-- Aresta de retorno: conecta o vértice atual a um ancestral que ainda está ativo na exploração.
+- **Aresta de retorno:** conecta o vértice atual a um ancestral que ainda está ativo na exploração.
 
 ---
 
@@ -100,7 +100,7 @@
 
 &emsp;Dijkstra utiliza três estruturas para controlar a busca.
 
-**1. Vetor de distâncias (dist)**
+**i. Vetor de distâncias `(dist)`**
 
 &emsp;Guarda o menor custo conhecido da origem até cada vértice.
 
@@ -117,13 +117,14 @@
 | E | ∞ |
 | F | ∞ |
 
-**2. Vetor de antecessores (ant)**
+**ii. Vetor de antecessores `(ant)`**
 
 &emsp;Guarda de onde viemos para chegar a cada vértice pelo melhor caminho conhecido.
 
-&emsp;Por exemplo, se descobrirmos que a melhor maneira de chegar a C é passando por A: ant[C] = A
+&emsp;Por exemplo, se descobrirmos que a melhor maneira de chegar a C é passando por A: 
+`ant[C] = A`
 
-**3. Conjunto de vértices fechados (fechado)**
+**iii. Conjunto de vértices fechados (fechado)**
 
 &emsp;Controla quais vértices já tiveram sua menor distância confirmada.
 
@@ -132,23 +133,26 @@
 
 ### Por que o Dijkstra não aceita pesos negativos?
 &emsp;Imagine que o algoritmo já encontrou o menor caminho até um vértice e decidiu fechá-lo.
+
 &emsp;Mas, mais adiante, aparece uma aresta com peso negativo que reduz o custo de um caminho que passa por outro vértice.
+
 &emsp;Isso poderia significar que a distância que já considerávamos definitiva estava errada.
 
 ### Implementação com heap binário
 &emsp;Agora imagine que temos milhares de vértices.
+
 &emsp;Em vez de procurar o menor valor percorrendo todos os vértices, podemos utilizar uma estrutura que mantém o menor elemento organizado para ser retirado primeiro.
 
 #### Resumo:
 &emsp;**Escolher o próximo vértice:** o algoritmo seleciona aquele que tem a menor distância acumulada entre os vértices ainda não fechados.
+
 &emsp;**Relaxar as arestas:** depois de selecionar esse vértice, o algoritmo verifica se passar por ele permite melhorar as distâncias dos vizinhos.
 
 &emsp;Essas duas operações trabalham juntas.
 
 ## 4. Prim 
 
-&emsp;Procura a maneira mais barata de conectar todos os vértices da rede.
-ncontra uma forma de conectar todos os vértices de um grafo com o menor custo total possível.
+&emsp;Encontra uma forma de conectar todos os vértices de um grafo com o menor custo total possível.
 
 ### 4.1 Árvore geradora mínima (Minimum Spanning Tree, ou MST)
 
@@ -159,7 +163,6 @@ ncontra uma forma de conectar todos os vértices de um grafo com o menor custo t
 3. Ter o menor custo total possível: a soma dos pesos das arestas deve ser mínima.
 
 ![grafo](/src/mst.jpg)
-
 
 &emsp;O algoritmo de Prim constrói a árvore geradora mínima aos poucos, começando por um **vértice qualquer.**
 
@@ -188,19 +191,19 @@ ncontra uma forma de conectar todos os vértices de um grafo com o menor custo t
 
 &emsp;O problema é ficar procurando manualmente o menor valor em uma lista com muitos vértices pode ser custoso.
 
-## 1. Fila de prioridade 
+## 5. Fila de prioridade 
 
 &emsp;Estrutura de dados em que cada elemento possui uma prioridade, e a remoção acontece de acordo com essa prioridade. Ela não segue necessariamente a ordem de chegada.
 
 &emsp;Sai primeiro o elemento que possui a maior prioridade (depende da regra escolhida).
 
-## 2. Heap binária
+## 6. Heap binária
 
 &emsp;Estrutura de dados que permite implementar uma fila de prioridade de maneira eficiente.
 
 &emsp;Árvore binária que respeita algumas regras específicas.
 
-### 2.1 Min-heap
+### 6.1 Min-heap
 
 &emsp;O menor valor fica sempre na raiz, tem maior prioridade, sai primeiro.
 
@@ -209,7 +212,7 @@ ncontra uma forma de conectar todos os vértices de um grafo com o menor custo t
 2. O valor de cada pai deve ser menor ou igual aos valores de seus filhos.
 3. A árvore deve ser completa: os níveis são preenchidos da esquerda para a direita, sem deixar espaços no meio.
 
-### Heap binária
+### 6.2 Heap binária
 
 #### Inserir um elemento
 
@@ -312,7 +315,7 @@ Temos uma min-heap [2, 5, 4, 9, 7]. Removemos o menor elemento. Qual será o vet
 
 <b>A*:</b> considera o custo acumulado desde a origem e uma estimativa do custo restante até o destino.
 
-## 1. Função \(f(n)\)
+## 7. Função \(f(n)\)
 
 \[\boxed{f(n)=g(n)+h(n)}\]
 
@@ -321,9 +324,10 @@ Temos uma min-heap [2, 5, 4, 9, 7]. Removemos o menor elemento. Qual será o vet
 - \(g(n)\): custo real acumulado da origem até o nó atual.
 - \(h(n)\): estimativa do custo do nó atual até o destino.
 - \(f(n)\): custo estimado total do caminho, passando pelo nó atual.
+
 Vamos entender cada uma.
 
-### 1.1. Custo acumulado: \(g(n)\)
+### 7.1. Custo acumulado: \(g(n)\)
 
 &emsp;É o custo que você já percorreu para chegar até determinado ponto.
 
@@ -337,7 +341,7 @@ Então:
 
 &emsp;Você já gastou 7 unidades de custo para chegar a C.
 
-### 1.2. Heurística: \(h(n)\)
+### 7.2. Heurística: \(h(n)\)
 
 &emsp;É uma estimativa de quanto ainda falta para chegar ao destino.
 
@@ -348,11 +352,11 @@ Então:
 
 >Atenção: esse valor não precisa ser o custo real do caminho. É uma estimativa utilizada para orientar a busca.
 
->A heurística do ponto final é zero porque, quando já estamos no destino, não falta nada para chegar até ele.
+>A heurística no ponto final é zero porque, quando já estamos no destino, não falta nada para chegar até ele.
 
->Heurística admissível nunca superestima o custo real mínimo restante.
+>Heurística admissível **nunca superestima** o custo real mínimo restante.
 
-### 1.3. Custo estimado total: \(f(n)\)
+### 7.3. Custo estimado total: \(f(n)\)
 
 &emsp;Agora basta somar os dois valores:
 
