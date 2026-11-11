@@ -162,7 +162,7 @@ graph TD
 
 &emsp;"Eu não gostei do produto."
 
-&emsp;Assim, a stop word é útil quando o foco está no significado central do texto.
+&emsp;Assim, a stop word é útil quando o foco está no **significado central do texto.**
 
 ### 1.5. Stemming e lematização
 
