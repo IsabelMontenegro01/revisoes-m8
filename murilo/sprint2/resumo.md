@@ -299,3 +299,64 @@ Temos uma min-heap [2, 5, 4, 9, 7]. Removemos o menor elemento. Qual será o vet
 ![02](/src/02.jpeg)
 
 ---
+
+# A*
+
+&emsp;Algoritmo de busca de caminhos. Seu objetivo é encontrar a rota de menor custo entre um ponto de partida e um destino.
+
+&emsp;Imagine que você está em uma estação da CPTM e quer chegar a outra. Existem vários caminhos possíveis, mas você não quer simplesmente explorar todos eles. Quer encontrar um caminho eficiente até o destino.
+
+&emsp;É justamente isso que o A* tenta fazer: além de considerar o custo que você já percorreu, **ele estima o quanto ainda falta para chegar ao destino.**
+
+**Dijkstra:** considera o custo acumulado desde a origem.
+
+<b>A*:</b> considera o custo acumulado desde a origem e uma estimativa do custo restante até o destino.
+
+## 1. Função \(f(n)\)
+
+\[\boxed{f(n)=g(n)+h(n)}\]
+
+&emsp;Cada parte representa uma informação:
+
+- \(g(n)\): custo real acumulado da origem até o nó atual.
+- \(h(n)\): estimativa do custo do nó atual até o destino.
+- \(f(n)\): custo estimado total do caminho, passando pelo nó atual.
+Vamos entender cada uma.
+
+### 1.1. Custo acumulado: \(g(n)\)
+
+&emsp;É o custo que você já percorreu para chegar até determinado ponto.
+
+&emsp;Imagine que você saiu da estação A e chegou à estação C, passando por B:
+
+- A → B: custo 3.
+- B → C: custo 4.
+
+Então:
+\[g(C)=3+4=7\]
+
+&emsp;Você já gastou 7 unidades de custo para chegar a C.
+
+### 1.2. Heurística: \(h(n)\)
+
+&emsp;É uma estimativa de quanto ainda falta para chegar ao destino.
+
+&emsp;Imagine que seu destino é D. Você está na estação C e estima que ainda faltam 5 unidades de custo para chegar até lá.
+
+Então: 
+\[h(C)=5\]
+
+>Atenção: esse valor não precisa ser o custo real do caminho. É uma estimativa utilizada para orientar a busca.
+
+>A heurística do ponto final é zero porque, quando já estamos no destino, não falta nada para chegar até ele.
+
+>Heurística admissível nunca superestima o custo real mínimo restante.
+
+### 1.3. Custo estimado total: \(f(n)\)
+
+&emsp;Agora basta somar os dois valores:
+
+\[f(C)=g(C)+h(C)\]
+\[f(C)=7+5=12\]
+
+&emsp;Isso significa que, passando por C, o algoritmo estima que o custo total da rota será 12.
