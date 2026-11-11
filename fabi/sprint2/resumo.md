@@ -9,7 +9,7 @@
 ## 1. Como o ROS 2 organiza um sistema robótico?
 
 ### 1.1. Nós (Nodes)
-&emsp;Um nó é um programa responsável por uma função específica do robô.
+&emsp;Programa responsável por uma função específica do robô.
 
 ```mermaid
 graph TD
