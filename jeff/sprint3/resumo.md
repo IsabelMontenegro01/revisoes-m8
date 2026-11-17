@@ -106,6 +106,10 @@ $$h_3 + \text{entrada de bom} \rightarrow \mathbf{h_5}$$
 
 ### Como ela sabe combinar essas informações?
 
+&emsp;Matematicamente, uma RNN possui pesos (parâmetros) que determinam como a entrada atual e o estado anterior serão combinados. 
+
+&emsp;Fórmula simplificada:
+
 \[h_t = \tanh(W_x x_t + W_h h_{t-1} + b)\]
 
 | Elemento | Significado |
@@ -117,3 +121,97 @@ $$h_3 + \text{entrada de bom} \rightarrow \mathbf{h_5}$$
 | $b$ | Viés |
 | $\tanh$ | Função de ativação |
 | $h_t$ | Novo estado produzido |
+
+&emsp;RNN aprende, durante o treinamento, os pesos que permitem combinar a palavra atual com as informações anteriores.
+
+&emsp;O estado não guarda literalmente uma lista de palavras. Ele é um vetor numérico que representa informações aprendidas pela rede.
+
+### RNN é a mesma em todas as palavras
+
+&emsp;Imagine que temos cinco palavras. Não são cinco redes diferentes. É a mesma célula RNN sendo utilizada cinco vezes, com os mesmos pesos.
+
+&emsp;O que muda a cada etapa é:
+- A palavra recebida.
+- O estado anterior.
+- O novo estado produzido.
+
+&emsp;E existe uma diferença importante entre ler uma frase e treinar a rede:
+- Durante a leitura, o estado muda a cada palavra.
+- Durante o treinamento, os pesos são ajustados para melhorar as previsões.
+
+&emsp;Quando uma frase nova começa, o estado é reiniciado. Mas os pesos aprendidos continuam os mesmos.
+
+## O que a RNN devolve: `return_sequences`
+
+&emsp;Durante a leitura, a RNN calcula um estado para cada palavra. Entretanto, podemos escolher quais informações serão entregues pela camada.
+
+&emsp;Essa escolha é feita pelo parâmetro return_sequences.
+
+&emsp;`return_sequences=False`: quando queremos uma classificação por frase. Uma camada Dense recebe o último estado e produz a resposta.
+
+&emsp;`return_sequences=True`: quando queremos entregar a sequência completa de estados, por exemplo, para alimentar outra RNN.
+
+&emsp;Exemplo: Considere uma frase com 13 palavras e uma RNN com 16 unidades.
+
+| Configuração | Saída | Utilização |
+| :--- | :--- | :--- |
+| False | (None, 16) | Entrega somente o último estado, um vetor por frase. |
+| True | (None, 13, 16) | Entrega o estado de cada palavra. |
+
+None: quantidade de frases no lote, variável.
+13: quantidade de palavras por frase.
+16: quantidade de números no estado.
+
+o último vetor da sequência, quando return_sequences=True, é o mesmo que seria entregue com return_sequences=False.????????
+
+## Como montar uma rede RNN com Keras
+
+```mermaid
+graph TD
+    classDef emb fill:#090F1D,stroke:#1C263A,stroke-width:1px,color:white;
+    classDef rnn fill:#071912,stroke:#143628,stroke-width:1px,color:white;
+    classDef dense fill:#110A1D,stroke:#26183D,stroke-width:1px,color:white;
+
+    A["<b>Embedding</b><br>Transforma IDs das palavras em vetores."]:::emb
+    B["<b>SimpleRNN</b><br>Lê os vetores em ordem e atualiza o estado."]:::rnn
+    C["<b>Dense</b><br>Combina os números e produz a classificação."]:::dense
+
+    A --> B --> C
+```
+### Embedding
+
+&emsp;O texto inicialmente é representado por IDs numéricos.
+
+Por exemplo:
+- `o` → 0
+- `café` → 1
+- `não` → 4
+
+&emsp;O problema é que a RNN precisa receber um vetor para cada palavra, e não apenas um número que identifica a palavra.
+
+&emsp;A camada Embedding transforma cada ID em um vetor de dimensão definida.
+
+&emsp;Por exemplo, se a dimensão for 8, cada palavra será representada por um vetor com 8 números.
+
+&emsp;Assim:
+- Antes da `Embedding`: `(None, 13)`.
+- Depois da `Embedding`: `(None, 13, 8)`.
+
+### SimpleRNN
+
+&emsp;Recebe os vetores da Embedding, processa a sequência e mantém o estado recorrente.
+
+&emsp;O número de unidades determina quantos números compõem esse estado.
+
+### Dense
+
+&emsp;Recebe os números produzidos pela RNN e combina essas informações para gerar a classificação.
+
+&emsp;No material, utiliza-se Dense(1) com ativação sigmoid.
+
+&emsp;A função sigmoid transforma a saída em um valor entre 0 e 1, interpretado como probabilidade da frase pertencer à classe positiva.
+- Resultado maior que 0,5: classificação positiva (1).
+- Resultado menor ou igual a 0,5: classificação negativa (0).
+
+## Quantidade de parâmetros
+
