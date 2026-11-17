@@ -215,3 +215,10 @@ Por exemplo:
 
 ## Quantidade de parâmetros
 
+## Treinamento e avaliação
+
+## O que significa a rede aprender a informação?
+
+## Inicialização dos pesos recorrentes
+
+## Bugs e problemas de avaliação
