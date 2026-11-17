@@ -145,7 +145,7 @@ $$h_3 + \text{entrada de bom} \rightarrow \mathbf{h_5}$$
 
 &emsp;Durante a leitura, a RNN calcula um estado para cada palavra. Entretanto, podemos escolher quais informações serão entregues pela camada.
 
-&emsp;Essa escolha é feita pelo parâmetro return_sequences.
+&emsp;Essa escolha é feita pelo parâmetro `return_sequences`.
 
 &emsp;`return_sequences=False`: quando queremos uma classificação por frase. Uma camada Dense recebe o último estado e produz a resposta.
 
@@ -162,7 +162,13 @@ None: quantidade de frases no lote, variável.
 13: quantidade de palavras por frase.
 16: quantidade de números no estado.
 
-o último vetor da sequência, quando return_sequences=True, é o mesmo que seria entregue com return_sequences=False.????????
+o último vetor da sequência, quando `return_sequences=True`, é o mesmo que seria entregue com `return_sequences=False`(no exemplo, o h5)
+
+- Ela continua recebendo as mesmas palavras, na mesma ordem, utilizando os mesmos pesos e calculando os mesmos estados.
+
+    A diferença é somente a seleção da saída:
+- False: entrega apenas \(h_5\).
+- True: entrega \(h_1, h_2, h_3, h_4, h_5\).
 
 ## Como montar uma rede RNN com Keras
 
@@ -215,10 +221,186 @@ Por exemplo:
 
 ## Quantidade de parâmetros
 
+&emsp;Os parâmetros são os números ajustados durante o treinamento.
+
+&emsp;A quantidade de parâmetros depende da arquitetura da rede, não da quantidade de palavras da frase.
+
+&emsp;Exemplo:
+
+- Vocabulário: 20 palavras.
+- Dimensão da Embedding: 4.
+- Unidades da RNN: 8.
+
+### Embedding
+
+&emsp;Cada palavra possui um vetor de 4 números.
+
+&emsp;20x4=80 parâmetros
+
+### SimpleRNN
+
+&emsp;Os parâmetros vêm de três partes:
+
+1. Pesos da entrada para o estado.
+2. Pesos do estado anterior para o novo estado.
+3. Viés (bias).
+
+&emsp;A fórmula utilizada é:
+\[P = (d \times u)+(u \times u)+u\]
+
+\(d\): dimensão do vetor de entrada.
+\(u\): quantidade de unidades da RNN.
+
+&emsp;No exemplo:
+
+\[P=(4\times8)+(8\times8)+8 = 32+64+8=\boxed{104}\]
+
+### Dense
+
+&emsp;Um peso para cada unidade da RNN, mais o viés:
+
+\[P=8+1=\boxed{9}\]
+
+| Camada | Parâmetros |
+| :--- | :--- |
+| Embedding | 80 |
+| SimpleRNN | 104 |
+| Dense | 9 |
+| **Total** | **193** |
+
 ## Treinamento e avaliação
+
+&emsp;O material diferencia três conjuntos de dados:
+- **Treino**: utilizado para ajustar os pesos.
+- **Validação**: acompanha o desempenho durante o treinamento, sem ajustar os pesos.
+- **Teste**: fica reservado para a avaliação final.
+
+&emsp;Uma época representa uma passagem por todas as frases do conjunto de treinamento.
 
 ## O que significa a rede aprender a informação?
 
+&emsp;A RNN precisa ler uma frase e classificá-la como positiva (1) ou negativa (0).
+
+&emsp;Exemplos:
+
+| Frase | Classificação |
+| :--- | :--- |
+| O café já estava bom | 1 |
+| O café já estava ruim | 0 |
+| O café não estava bom | 0 |
+| O café não estava ruim | 1 |
+
+&emsp;O adjetivo: `bom` ou `ruim`.
+&emsp;A presença ou ausência de `não`.
+
+&emsp;A rede precisa aprender a considerar essas informações para classificar corretamente a frase.
+
+#### Inicialmente, a rede não sabe o que é importante
+
+&emsp;Quando criamos uma RNN, seus pesos começam com valores iniciais, geralmente aleatórios.
+
+&emsp;Isso significa que ela ainda não aprendeu a identificar corretamente o padrão da tarefa.
+
+&emsp;Imagine que ela recebe: O café não estava bom.
+
+&emsp;Ela percorre as palavras e produz os estados. Depois, a última camada (Dense) utiliza o estado final para produzir uma previsão.
+
+&emsp;Por exemplo, poderia prever:
+\[P(\text{positiva}) = 0{,}80\]
+
+&emsp;Isso significa que a rede está atribuindo 80% de probabilidade à classificação positiva.
+
+&emsp;Mas a resposta correta é negativa (0).
+&emsp;Portanto, a rede errou.
+
+#### O erro é utilizado para ajustar os pesos
+
+&emsp;A rede compara sua previsão com a resposta correta e utiliza essa diferença para ajustar seus parâmetros.
+
+1. **Entrada**
+   “O café não estava bom”
+
+   ↓
+
+2. **RNN**
+   Lê as palavras e atualiza os estados
+
+   ↓
+
+3. **Previsão**
+   Probabilidade positiva = 0,80
+
+   ↓
+
+4. **Comparação com a resposta correta**
+   Previsão: 0,80 | Resposta: 0
+   **Erro**
+
+   ↓
+
+5. **Ajuste dos pesos**
+   O treinamento modifica os parâmetros para reduzir o erro
+
+&emsp;Esse processo acontece repetidamente com várias frases do conjunto de treinamento.
+
+&emsp;A cada lote de exemplos, o algoritmo calcula o erro e ajusta os pesos para tentar melhorar as próximas previsões.
+
+&emsp;Tecnicamente, esse ajuste utiliza o cálculo de gradientes e a retropropagação do erro ao longo da sequência (Backpropagation Through Time, ou BPTT).
+
+#### Mas o que exatamente a rede aprende?
+
+&emsp;Imagine que, após treinar com várias frases, a rede consiga identificar dois padrões:
+- `bom` costuma indicar uma avaliação positiva.
+- `não` pode inverter a interpretação da avaliação.
+
+&emsp;Assim, ela pode aprender que:
+
+| Combinação | Interpretação |
+| :--- | :--- |
+| `bom`, sem `não` | Positiva |
+| `ruim`, sem `não` | Negativa |
+| `não` + `bom` | Negativa |
+| `não` + `ruim` | Positiva |
+
+&emsp;Ela não precisa decorar cada frase inteira. O objetivo é ajustar os pesos de modo que as informações relevantes sejam representadas nos estados e utilizadas para produzir a classificação correta.
+
+&emsp;Então, **aprender** é ajustar os parâmetros para que a rede consiga identificar padrões importantes nos dados e utilizá-los para realizar previsões.
+
+#### Relação entre estado e pesos
+
+&emsp;**Pesos**: são o que a rede aprendeu durante o treinamento.
+
+&emsp;**Estado**: é a informação que a rede está carregando enquanto lê uma frase.
+
+| Estado | Pesos (parâmetros) |
+| :--- | :--- |
+| Muda enquanto a RNN lê a frase | Mudam durante o treinamento |
+| É atualizado a cada palavra | São ajustados a partir dos erros |
+| Carrega informações da frase atual | Determinam como a rede processa as informações |
+| Começa novamente quando chega outra frase | Permanecem após o treinamento |
+
+&emsp;Por exemplo, depois de treinar, os pesos já podem ter aprendido a identificar a importância da palavra não. Quando uma nova frase chega, a RNN utiliza esses pesos para processar as palavras e atualizar seus estados.
+
+#### RNN pode perder informações anteriores
+
+&emsp;Dificuldade de preservar informações importantes quando a sequência fica muito longa.
+
+&emsp;Exemplo: O café não estava [várias palavras] bom.
+
+&emsp;A palavra `não` aparece no começo, mas o adjetivo que ela precisa influenciar aparece muito depois.
+
+&emsp;A RNN depende do estado para carregar essa informação ao longo da sequência. Se não conseguir preservá-la adequadamente, pode chegar ao final sem representar corretamente a influência do `não`.
+
+&emsp;A ideia é observar se a rede consegue continuar aprendendo a tarefa mesmo quando existe uma distância maior entre as palavras importantes.
+
 ## Inicialização dos pesos recorrentes
 
-## Bugs e problemas de avaliação
+&emsp;Duas formas de inicialização:
+- `orthogonal`: inicialização padrão apresentada para a matriz recorrente do Keras.
+- `glorot`: outra inicialização utilizada no experimento.
+
+&emsp;A matriz recorrente possui dimensão \(16 \times 16\), considerando 16 unidades.
+
+&emsp;A inicialização ortogonal não encolhe nem estica as direções durante a multiplicação pela matriz inicial. Já a Glorot pode encolher algumas direções e esticar outras.
+
+&emsp;Essa comparação é feita antes do treinamento. Depois, os pesos podem ser modificados pelo próprio treinamento.
