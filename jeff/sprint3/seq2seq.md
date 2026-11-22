@@ -200,3 +200,5 @@ O encoder entrega:
 | Contexto | Apenas o resumo final | Contexto calculado a cada passo |
 | Camada Attention | Não | Sim |
 | Entrada da Dense | Estado do decoder | Estado do decoder concatenado ao contexto |
+
+>`Seed` é uma semente utilizada para controlar a geração de números aleatórios. Em redes neurais, ela é frequentemente utilizada para inicializar os pesos de maneira reproduzível.
