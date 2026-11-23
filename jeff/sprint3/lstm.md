@@ -66,7 +66,7 @@
    Produz a classificação a partir do estado final.
 
 
-A&emsp; LSTM recebe esses vetores, processa a sequência e mantém suas duas memórias.
+&emsp;A LSTM recebe esses vetores, processa a sequência e mantém suas duas memórias.
 
 &emsp;A `Dense` recebe o estado final \(h\) e produz a classificação.
 

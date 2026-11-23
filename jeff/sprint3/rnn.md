@@ -23,9 +23,10 @@
 
 &emsp;Consegue considerar o que apareceu anteriormente na frase enquanto lê as próximas palavras.
 
-RNN começa pela primeira palavra e vai percorrendo a frase na ordem. Ela não processa todas as palavras simultaneamente.
+&emsp;RNN começa pela primeira palavra e vai percorrendo a frase na ordem. Ela não processa todas as palavras simultaneamente.
 
-Quando a RNN recebe a primeira palavra, ela faz duas coisas:
+&emsp;Quando a RNN recebe a primeira palavra, ela faz duas coisas:
+
 1. Recebe a representação numérica da palavra atual.
 2. Atualiza seu estado interno/estado oculto (hidden state) - conjunto de números que representa as informações que a rede está carregando naquele momento.
 
@@ -158,11 +159,11 @@ $$h_3 + \text{entrada de bom} \rightarrow \mathbf{h_5}$$
 | False | (None, 16) | Entrega somente o último estado, um vetor por frase. |
 | True | (None, 13, 16) | Entrega o estado de cada palavra. |
 
-None: quantidade de frases no lote, variável.
-13: quantidade de palavras por frase.
-16: quantidade de números no estado.
+- None: quantidade de frases no lote, variável.
+- 13: quantidade de palavras por frase.
+- 16: quantidade de números no estado.
 
-o último vetor da sequência, quando `return_sequences=True`, é o mesmo que seria entregue com `return_sequences=False`(no exemplo, o h5)
+&emsp;O último vetor da sequência, quando `return_sequences=True`, é o mesmo que seria entregue com `return_sequences=False`(no exemplo, o h5)
 
 - Ela continua recebendo as mesmas palavras, na mesma ordem, utilizando os mesmos pesos e calculando os mesmos estados.
 
@@ -188,7 +189,8 @@ graph TD
 
 &emsp;O texto inicialmente é representado por IDs numéricos.
 
-Por exemplo:
+&emsp;Por exemplo:
+
 - `o` → 0
 - `café` → 1
 - `não` → 4
@@ -200,6 +202,7 @@ Por exemplo:
 &emsp;Por exemplo, se a dimensão for 8, cada palavra será representada por um vetor com 8 números.
 
 &emsp;Assim:
+
 - Antes da `Embedding`: `(None, 13)`.
 - Depois da `Embedding`: `(None, 13, 8)`.
 
@@ -248,8 +251,8 @@ Por exemplo:
 &emsp;A fórmula utilizada é:
 \[P = (d \times u)+(u \times u)+u\]
 
-\(d\): dimensão do vetor de entrada.
-\(u\): quantidade de unidades da RNN.
+- \(d\): dimensão do vetor de entrada.
+- \(u\): quantidade de unidades da RNN.
 
 &emsp;No exemplo:
 
