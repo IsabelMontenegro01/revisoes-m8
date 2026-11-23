@@ -20,9 +20,11 @@
 &emsp;A tradução não consiste em substituir cada palavra pela correspondente na mesma posição.
 
 &emsp;Existem três particularidades:
+
 1. Inversão da ordem: "café quente" vira "hot coffee".
 2. Outra inversão: "não estava" vira "was not".
 3. Uma palavra pode virar duas: "gelado" vira "ice cold".
+
 Portanto, não podemos simplesmente utilizar uma rede que recebe uma palavra e produz sua tradução na mesma posição.
 
 &emsp;Precisamos de uma arquitetura capaz de ler a frase inteira e produzir outra sequência, considerando o contexto.

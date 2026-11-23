@@ -51,7 +51,9 @@
 - Valor próximo de 0: ignora o passado ao calcular o valor novo.
 - Valor próximo de 1: utiliza o estado anterior normalmente.
 
-## O que a GRU devolve: `return_sequences` e `return_state`
+## O que a GRU devolve
+
+&emsp;`return_sequences` e `return_state`
 
 ## Quantidade de parâmetros da GRU
 
