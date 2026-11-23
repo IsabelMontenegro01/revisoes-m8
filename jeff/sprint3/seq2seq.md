@@ -83,11 +83,12 @@ Cada palavra recebe um identificador.
 
 &emsp;O decoder é responsável por produzir a tradução em inglês, uma palavra por vez.
 
-Ele também utiliza:
+&emsp;Ele também utiliza:
 1. Embedding.
 2. LSTM.
 3. Dense com softmax.
-A diferença é que sua LSTM começa com os estados finais do encoder.
+
+&emsp;A diferença é que sua LSTM começa com os estados finais do encoder.
 
 &emsp;Além disso, recebe a palavra anterior em inglês.
 
@@ -116,11 +117,12 @@ A diferença é que sua LSTM começa com os estados finais do encoder.
 
 
 &emsp;O encoder entrega seus estados finais:
+
 \[h_{encoder},c_{encoder}\]
 
-O decoder recebe esses estados como estado inicial:
-\[h_{decoder}^{(0)}=h_{encoder}/\]
+&emsp;O decoder recebe esses estados como estado inicial:
 
+\[h_{decoder}^{(0)}=h_{encoder}/\]
 \[c_{decoder}^{(0)}=c_{encoder}\]
 
 # Mecanismo de Atenção (Attention)
@@ -133,7 +135,8 @@ O decoder recebe esses estados como estado inicial:
 
 &emsp;Imagine uma frase com 14 palavras e uma LSTM com 32 unidades.
 
-O encoder entrega:
+&emsp;O encoder entrega:
+
 - 32 números de \(h\).
 - 32 números de \(c\).
 
@@ -163,7 +166,6 @@ O encoder entrega:
 
 3. **Decoder**
 
----
 
 ### Com atenção
 
