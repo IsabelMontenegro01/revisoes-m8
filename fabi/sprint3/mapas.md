@@ -119,9 +119,7 @@
 &emsp;Combina diferentes representações.
 
 - Topologia para representar a conexão entre salas.
-
 - Geometria para representar paredes e obstáculos.
-
 - Semântica para identificar portas, elevadores e áreas restritas.
 
 ## Distance Transform (Distância até os obstáculos)
