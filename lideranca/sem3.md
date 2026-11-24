@@ -76,3 +76,35 @@
 * A tragédia da Challenger não foi um acidente imprevisível, mas o resultado direto de negligência estrutural e falhas de governança.
 * A busca por metas comerciais e a preservação da imagem institucional sobrepuseram-se aos critérios rigorosos de engenharia, criando uma cultura onde alertas técnicos foram silenciados.
 * A principal lição do desastre é que a segurança depende do respeito e da confiança nas recomendações dos especialistas de ponta, garantindo que a voz técnica nunca seja reprimida pelo poder executivo.
+
+---
+
+## Extra
+
+### Filósofos que falam de poder
+
+### A) Maquiavel: 1469–1527
+&emsp;O poder está relacionado à capacidade de conquistar, manter e exercer o governo. Para isso, o governante precisa agir estrategicamente, considerando as circunstâncias e utilizando os meios necessários para preservar o Estado.
+
+### B) Karl Marx: 1818–1883
+&emsp;O poder está ligado às relações de produção e à divisão entre classes sociais. A burguesia controla os meios de produção e exerce influência sobre a organização política e social. A luta de classes é central para compreender as transformações históricas.
+
+### C) Max Weber: 1864–1920
+&emsp;O poder é a capacidade de impor a própria vontade em uma relação social, mesmo diante de resistências. A dominação, que ocorre quando as pessoas reconhecem ou aceitam a autoridade de alguém, como na dominação tradicional, carismática e legal-racional.
+
+&emsp;Três tipos ideais de dominação legítima:
+1. Tradicional: baseada nos costumes, como uma monarquia hereditária.
+2. Carismática: baseada na confiança nas qualidades extraordinárias de um líder.
+3. Legal-racional: baseada em leis e regras, como a autoridade de um juiz.
+
+### D) Michel Foucault: 1926–1984
+
+&emsp;O poder está presente em todas as relações sociais, não apenas no Estado. Ele se manifesta por meio de instituições, normas, discursos e mecanismos de controle que influenciam o comportamento das pessoas. O poder também produz conhecimentos e molda os indivíduos.
+
+&emsp;Diferentes mecanismos:
+- Poder disciplinar: controla e molda os comportamentos, como em escolas, prisões e quartéis.
+- Biopoder: atua sobre a vida e as populações, como nas políticas de saúde pública.
+- Poder pastoral: busca conduzir os indivíduos, historicamente associado à prática religiosa e a formas de orientação das condutas.
+
+
+>Poder é o exercício da liderança expresso nas relações sociais, nas quais se declara a habilidade de impor algo a alguém ou a algum grupo, declarando-se uma manifestação de autoridade.
