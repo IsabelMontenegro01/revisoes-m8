@@ -1,10 +1,6 @@
 # Backpropagation: funcionamento, matemática e aplicação
 
-## Como este material está organizado
-
-&emsp;Este estudo aborda o funcionamento matemático do Backpropagation, desde a função de custo até o cálculo dos gradientes e a atualização dos parâmetros de uma rede neural. O foco está em compreender como o erro é retropropagado pelas camadas e como cada peso e viés influencia o resultado produzido pela rede.
-
->**Ideia central:** o Feedforward calcula a previsão; a função de custo mede o erro; o Backpropagation calcula como cada peso e viés influencia esse custo; e o otimizador utiliza os gradientes para atualizar os parâmetros.
+&emsp;**Ideia central:** o Feedforward calcula a previsão; a função de custo mede o erro; o Backpropagation calcula como cada peso e viés influencia esse custo; e o otimizador utiliza os gradientes para atualizar os parâmetros.
 
 ## 1. Por que precisamos do Backpropagation?
 
