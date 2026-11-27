@@ -132,7 +132,7 @@ graph LR
 
 &emsp;<b>*Se fosse um robô real?*</b> A odometria iria derivar e o mapa construído ficaria distorcido. Seria preciso corrigir a pose com os sensores (localização/SLAM, fechamento de loop).
 
-## 3. Mapeamento
+## 3. Mapeamento parte 2
 
 ### 3.1. Que tipo de mapa eu construí?
 
