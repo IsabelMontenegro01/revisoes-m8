@@ -262,7 +262,7 @@ graph TD
 | :--- | :--- |
 | **Paredes** (`b`) | Não entram no grafo, então nenhum caminho passa por elas. |
 | **Becos sem saída** | O A* não segue por eles na rota final: só levam a caminhos mais longos. Na exploração eles são visitados (preciso conhecê-los para ter certeza), mas a rota final não passa por lá. |
-| **Fronteira que deixou de ser fronteira** | Se, no meio do trajeto, os sensores revelam o que tinha em volta da fronteira-alvo, ela deixou de ser fronteira. Abandono o trajeto e escolho outra (não ando à toa). |
+| **Fronteira que deixou de ser fronteira** | Os sensores veem as 8 células em volta, então às vezes, no meio do caminho, o robô já enxerga o vizinho desconhecido que queria descobrir. A fronteira perdeu o motivo de ser visitada: abandono o trajeto e escolho outra (não ando à toa). |
 | **Trajeto em que um movimento falhou** | Registro a célula como parede e **replanejo** a partir de onde estou. |
 | **Usar `/get_map` na parte 2** | Seria "trapacear": a parte 2 é sobre construir o mapa sozinho. O `/get_map` só é chamado **depois** da exploração, para conferir o resultado. |
 | **Parar ao achar o alvo** | Não garantiria rota ótima (5.1). |
